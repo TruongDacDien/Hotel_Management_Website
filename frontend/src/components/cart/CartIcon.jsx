@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useCart } from "../../hooks/use-cart";
@@ -7,7 +7,7 @@ export function CartIcon() {
   const { totalItems } = useCart();
 
   return (
-    <Link href="/cart">
+    <Link to="/cart">
       <Button
         asChild
         variant="ghost"

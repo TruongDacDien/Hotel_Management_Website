@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link } from "react-router-dom";
 import { mockServices } from "../../mock/service";
 import { Card, CardContent } from "../../components/ui/card";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -57,7 +57,7 @@ function ServiceCard({ service }) {
         <h3 className="font-bold text-xl text-primary mb-2">{service.name}</h3>
         <p className="text-neutral-700 mb-4">{service.description}</p>
         <Link
-          href={`/services/${service.id}/book`}
+          to={`/services/${service.id}/book`}
           className="hover:underline inline-flex items-center text-primary hover:text-primary-dark transition-colors duration-300 font-medium"
         >
           Learn More <ArrowRight className="ml-1 h-4 w-4" />

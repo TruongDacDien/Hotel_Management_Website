@@ -9,7 +9,7 @@ import Testimonials from "../../components/home/Testimonials";
 import { useEffect } from "react";
 
 export default function HomePage() {
-  // Scroll to specific section if hash is present in URL
+  console.log("App mounted");
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
