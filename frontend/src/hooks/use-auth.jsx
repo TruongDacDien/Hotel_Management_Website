@@ -2,13 +2,14 @@ import { createContext, useContext, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
 import { useToast } from "../hooks/use-toast";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  console.log("AuthProvider mounted");
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  //const navigate = useNavigate(); // Sử dụng useNavigate để điều hướng
   const [user, setUser] = useState(null);
 
   const loginMutation = useMutation({
@@ -23,7 +24,7 @@ export function AuthProvider({ children }) {
         title: "Welcome back!",
         description: `You've successfully signed in.`,
       });
-      setLocation("/");
+      window.location.href = "/"; // Sửa lỗi: Thay setLocation("/") bằng navigate("/")
     },
     onError: () => {
       toast({
@@ -46,7 +47,7 @@ export function AuthProvider({ children }) {
         title: "Account created!",
         description: "Your account has been created successfully.",
       });
-      setLocation("/");
+      window.location.href = "/"; // Sửa lỗi
     },
     onError: () => {
       toast({
@@ -68,7 +69,7 @@ export function AuthProvider({ children }) {
         title: "Logged out",
         description: "You've been successfully logged out.",
       });
-      setLocation("/");
+      window.location.href = "/"; // Sửa lỗi
     },
     onError: () => {
       toast({
@@ -97,6 +98,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+  console.log("AuthContext value:", context);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }

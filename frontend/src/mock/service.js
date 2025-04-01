@@ -3,12 +3,14 @@ export const mockServices = [
     id: 1,
     name: "Yacht Charter",
     description: "Charter a luxury yacht for a day of sailing and exploration.",
+    price: 250,
     imageUrl:
       "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 2,
     name: "Fine Dining",
+    price: 250,
     description:
       "Experience exquisite cuisine prepared by our renowned chefs using the finest ingredients.",
     imageUrl:
@@ -17,6 +19,7 @@ export const mockServices = [
   {
     id: 3,
     name: "Spa & Wellness",
+    price: 250,
     description:
       "Rejuvenate your body and mind with our holistic spa treatments and wellness programs.",
     imageUrl:
@@ -25,6 +28,7 @@ export const mockServices = [
   {
     id: 4,
     name: "Concierge Service",
+    price: 250,
     description:
       "Our dedicated concierge team is available 24/7 to ensure your every need is met promptly.",
     imageUrl:
@@ -33,6 +37,7 @@ export const mockServices = [
   {
     id: 5,
     name: "Car Rental",
+    price: 250,
     description:
       "Explore the surroundings in style with our premium car rental service and chauffeur options.",
     imageUrl:
@@ -41,6 +46,7 @@ export const mockServices = [
   {
     id: 6,
     name: "Event Planning",
+    price: 250,
     description:
       "Host memorable events in our elegant venues with personalized planning services.",
     imageUrl:
@@ -49,6 +55,7 @@ export const mockServices = [
   {
     id: 7,
     name: "Airport Transfer",
+    price: 250,
     description:
       "Begin your luxury experience from the moment you arrive with our seamless transfer service.",
     imageUrl:
@@ -57,6 +64,7 @@ export const mockServices = [
   {
     id: 8,
     name: "Private Dining",
+    price: 250,
     description:
       "Intimate dining experiences in exclusive settings with personalized menus.",
     imageUrl:
