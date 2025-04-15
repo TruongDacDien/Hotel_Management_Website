@@ -10,37 +10,39 @@ import { useEffect } from "react";
 
 export default function HomePage() {
   console.log("App mounted");
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      const element = document.querySelector(hash);
-      if (element) {
-        setTimeout(() => {
-          const headerOffset = 80;
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition =
-            elementPosition + window.pageYOffset - headerOffset;
+  // useEffect(() => {
+  //   const hash = window.location.hash;
+  //   if (hash) {
+  //     const element = document.querySelector(hash);
+  //     if (element) {
+  //       setTimeout(() => {
+  //         const headerOffset = 80;
+  //         const elementPosition = element.getBoundingClientRect().top;
+  //         const offsetPosition =
+  //           elementPosition + window.pageYOffset - headerOffset;
 
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth",
-          });
-        }, 100);
-      }
-    } else {
-      window.scrollTo(0, 0);
-    }
-  }, []);
+  //         window.scrollTo({
+  //           top: offsetPosition,
+  //           behavior: "smooth",
+  //         });
+  //       }, 100);
+  //     }
+  //   } else {
+  //     window.scrollTo(0, 0);
+  //   }
+  // }, []);
 
   return (
     <>
-      <Hero />
-      <Introduction />
-      <RoomsList featured={true} />
-      <ServicesList featured={true} />
-      <Amenities />
-      <Gallery />
-      <Testimonials />
+      <div className="home-container">
+        <Hero />
+        <Introduction />
+        <RoomsList featured={true} />
+        <ServicesList featured={true} />
+        <Amenities />
+        <Gallery />
+        <Testimonials />
+      </div>
     </>
   );
 }

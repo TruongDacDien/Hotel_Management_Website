@@ -14,6 +14,11 @@ import ServicesPage from "./pages/Service/ServicePage";
 import RoomDetailPage from "./pages/Room/RoomDetailPage";
 import ServiceDetailPage from "./pages/Service/ServiceDetailPage";
 import ServiceBookingPage from "./pages/Service/ServiceBookingPage";
+import AuthPage from "./pages/LoginPage/authPage";
+import AboutPage from "./pages/OtherPage/AboutPage";
+import ContactPage from "./pages/OtherPage/ContactPage";
+import CartPage from "./pages/CartPage/CartPage";
+import ProfilePage from "./pages/ProfilePage/UserProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +51,26 @@ const router = createBrowserRouter([
       {
         path: "/services/:id/book",
         element: <ServiceBookingPage />,
+      },
+      {
+        path: "/auth",
+        element: <AuthPage />,
+      },
+      {
+        path: "/aboutus",
+        element: <AboutPage />,
+      },
+      {
+        path: "/contact",
+        element: <ContactPage />,
+      },
+      {
+        path: "/cart",
+        element: <CartPage />,
+      },
+      {
+        path: "/userprofile",
+        element: <ProfilePage />,
       },
     ],
   },
