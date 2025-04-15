@@ -11,6 +11,21 @@ export default function Header() {
   const location = useLocation(); // 🔄 Không cần destructuring
 
   const { user, logoutMutation } = useAuth();
+  const handleScrollTo = (id) => {
+    const element = document.getElementById(id);
+    console.log(element);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const handleAmenitiesClick = (e) => {
+    handleScrollTo("amenities");
+  };
+
+  const handleGalleryClick = (e) => {
+    handleScrollTo("gallery");
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,8 +62,12 @@ export default function Header() {
         <nav className="hidden md:flex items-center space-x-8">
           <NavLink to="/rooms">Rooms</NavLink>
           <NavLink to="/services">Services</NavLink>
-          <NavLink to="/amenities">Amenities</NavLink>
-          <NavLink to="/gallery">Gallery</NavLink>
+          <NavLink to="/#amenities" onClick={handleAmenitiesClick}>
+            Amenities
+          </NavLink>
+          <NavLink to="/#gallery" onClick={handleGalleryClick}>
+            Gallery
+          </NavLink>
           <div className="flex items-center space-x-4">
             <CartIcon />
             {user ? (
@@ -85,7 +104,7 @@ export default function Header() {
                     <LogIn className="h-4 w-4 mr-1" /> Sign In
                   </Button>
                 </Link>
-                <Link to="/auth?tab=register">
+                {/* <Link to="/auth?tab=register">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -93,16 +112,18 @@ export default function Header() {
                   >
                     <UserPlus className="h-4 w-4 mr-1" /> Register
                   </Button>
-                </Link>
+                </Link> */}
               </div>
             )}
             <Link to="/rooms">
-              <Button className="cursor-pointer">Book Now</Button>
+              <Button className="bg-black text-white cursor-pointer">
+                Book Now
+              </Button>
             </Link>
           </div>
         </nav>
 
-        <div className="flex items-center md:hidden">
+        {/* <div className="flex items-center md:hidden">
           <CartIcon />
           <Button
             variant="ghost"
@@ -115,16 +136,16 @@ export default function Header() {
               <Menu className="h-6 w-6" />
             )}
           </Button>
-        </div>
+        </div> */}
       </div>
 
-      {mobileMenuOpen && (
+      {/* {mobileMenuOpen && (
         <div className="md:hidden bg-white py-4 shadow-md">
           <div className="container mx-auto px-4 flex flex-col space-y-4">
             <MobileNavLink to="/rooms">Rooms</MobileNavLink>
             <MobileNavLink to="/services">Services</MobileNavLink>
-            <MobileNavLink to="/amenities">Amenities</MobileNavLink>
-            <MobileNavLink to="/gallery">Gallery</MobileNavLink>
+            <MobileNavLink to="/#amenities">Amenities</MobileNavLink>
+            <MobileNavLink to="/#gallery">Gallery</MobileNavLink>
             {user ? (
               <div className="flex flex-col space-y-2">
                 <div className="py-2 text-sm">Logged in as {user.name}</div>
@@ -175,19 +196,19 @@ export default function Header() {
             </Link>
           </div>
         </div>
-      )}
+      )} */}
     </header>
   );
 }
 
-function NavLink({ to, children }) {
+function NavLink({ to, children, onClick }) {
   const location = useLocation();
   const isActive =
     location.pathname === to ||
     (to.startsWith("/#") && location.pathname === "/");
 
   return (
-    <Link to={to}>
+    <Link to={to} onClick={onClick}>
       <div
         className={`font-medium cursor-pointer transition-colors duration-300 ${
           isActive ? "text-primary" : "text-neutral-700 hover:text-primary"

@@ -1,6 +1,16 @@
 import ServicesList from "../../components/home/ServicesList";
+import { useState, useEffect } from "react";
+import { mockServices } from "../../mock/service";
 
 function ServicesPage() {
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      setServices(mockServices);
+    }, 1000);
+  }, []);
   return (
     <div className="pt-24">
       <div className="container mx-auto px-4 py-12">
@@ -15,7 +25,7 @@ function ServicesPage() {
         </div>
       </div>
 
-      <ServicesList featured={false} />
+      <ServicesList featured={false} services={services} />
     </div>
   );
 }

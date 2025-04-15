@@ -34,12 +34,12 @@ export default function Footer() {
           <div>
             <h4 className="text-xl font-bold mb-6">Quick Links</h4>
             <ul className="space-y-3">
-              <FooterLink to="/">About Us</FooterLink>
+              <FooterLink to="/aboutus">About Us</FooterLink>
               <FooterLink to="/rooms">Rooms & Suites</FooterLink>
               <FooterLink to="/services">Services</FooterLink>
               <FooterLink to="/#amenities">Amenities</FooterLink>
               <FooterLink to="/#gallery">Gallery</FooterLink>
-              <FooterLink to="/#contact">Contact Us</FooterLink>
+              <FooterLink to="/contact">Contact Us</FooterLink>
             </ul>
           </div>
 

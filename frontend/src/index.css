@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* HomePage.css */
+.home-container {
+  scroll-behavior: smooth;
+}
