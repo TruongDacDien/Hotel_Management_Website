@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const CustomerController = require('../controllers/customerController');
 const CustomerService = require('../services/customerService');
-const Customer = require('../models/customer');
+const Customer = require('../models/Customer');
 const pool = require('../config/database');
 const uploadImage = require('../middlewares/uploadMiddleware');
 

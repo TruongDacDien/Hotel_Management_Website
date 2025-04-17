@@ -4,6 +4,17 @@ const uploadImage = require('../middlewares/uploadMiddleware');
 class CustomerController {
     constructor(customerService) {
         this.customerService = customerService;
+
+        // Bind all methods
+        this.getAllCustomers = this.getAllCustomers.bind(this);
+        this.getCustomerById = this.getCustomerById.bind(this);
+        this.getCustomerByCCCD = this.getCustomerByCCCD.bind(this);
+        this.getCustomerByPhone = this.getCustomerByPhone.bind(this);
+        this.createCustomer = this.createCustomer.bind(this);
+        this.updateCustomer = this.updateCustomer.bind(this);
+        this.deleteCustomer = this.deleteCustomer.bind(this);
+        this.uploadCCCDImage = this.uploadCCCDImage.bind(this);
+        this.deleteCCCDImage = this.deleteCCCDImage.bind(this);
     }
 
     async getAllCustomers(req, res, next) {

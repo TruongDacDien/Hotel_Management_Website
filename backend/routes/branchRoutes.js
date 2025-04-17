@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const BranchController = require('../controllers/branchController');
 const BranchService = require('../services/branchService');
-const Branch = require('../models/branch')
+const Branch = require('../models/Branch')
 const pool = require('../config/database');
 
 // Khởi tạo dependency

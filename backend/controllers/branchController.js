@@ -2,6 +2,13 @@
 class BranchController {
     constructor(branchService) {
       this.branchService = branchService;
+      
+      // Bind all methods
+      this.getAllBranches = this.getAllBranches.bind(this);
+      this.getBranchById = this.getBranchById.bind(this);
+      this.createBranch = this.createBranch.bind(this);
+      this.updateBranch = this.updateBranch.bind(this);
+      this.deleteBranch = this.deleteBranch.bind(this);
     }
   
     async getAllBranches(req, res, next) {

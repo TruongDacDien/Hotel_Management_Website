@@ -3,6 +3,7 @@ const express = require('express');
 //const bodyParser = require('body-parser');
 const branchRoutes = require('./routes/branchRoutes');
 const customerRoutes = require('./routes/customerRoutes');
+const bookingDetailRoutes = require('./routes/bookingDetailRoutes');
 //const roomRoutes = require('./routes/roomRoutes');
 // ... import other routes
 
@@ -14,6 +15,7 @@ const app = express();
 // Routes
 app.use('/api/branches', branchRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/bookingDetails', bookingDetailRoutes);
 // app.use('/api/rooms', roomRoutes);
 // ... other routes
 
