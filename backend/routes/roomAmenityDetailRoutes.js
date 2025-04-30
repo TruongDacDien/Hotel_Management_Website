@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const RoomAmenityDetailController = require('../controllers/roomAmenityDetailController');
 const RoomAmenityDetailService = require('../services/roomAmenityDetailService');
-const RoomAmenityDetail = require('../models/roomAmenityDetail');
+const RoomAmenityDetail = require('../models/RoomAmenityDetail');
 const pool = require('../config/database');
 
 // Initialize dependencies

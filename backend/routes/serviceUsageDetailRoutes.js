@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const ServiceUsageDetail = require('../models/serviceUsageDetail');
+const ServiceUsageDetail = require('../models/ServiceUsageDetail');
 const ServiceUsageDetailService = require('../services/serviceUsageDetailService');
 const ServiceUsageDetailController = require('../controllers/serviceUsageDetailController');
 const pool = require('../config/database');
