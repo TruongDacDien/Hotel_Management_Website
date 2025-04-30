@@ -19,8 +19,10 @@ class Role {
     async create(data) {
         const { accountId, permissions } = data;
         await this.pool.query(
-            `INSERT INTO PhanQuyen (MaTKNV, TrangChu, Phong, DatPhong, HoaDon, QLKhachHang, QLPhong, QLLoaiPhong, QLDichVu, QLLoaiDichVu, QLTienNghi, QLNhanVien, QLTaiKhoan, ThongKe)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO PhanQuyen (MaTKNV, TrangChu, Phong, DatPhong, HoaDon, 
+             QLKhachHang, QLPhong, QLLoaiPhong, QLDichVu, QLLoaiDichVu, 
+             QLTienNghi, QLNhanVien, QLTaiKhoan, ThongKe, ThongBao, LichSuHoatDong)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [accountId, ...permissions]
         );
         return data;
@@ -30,7 +32,10 @@ class Role {
         const { accountId, permissions } = data;
         await this.pool.query(
             `UPDATE PhanQuyen
-             SET MaTKNV = ?, TrangChu = ?, Phong = ?, DatPhong = ?, HoaDon = ?, QLKhachHang = ?, QLPhong = ?, QLLoaiPhong = ?, QLDichVu = ?, QLLoaiDichVu = ?, QLTienNghi = ?, QLNhanVien = ?, QLTaiKhoan = ?, ThongKe = ?
+             SET MaTKNV = ?, TrangChu = ?, Phong = ?, DatPhong = ?, HoaDon = ?, 
+             QLKhachHang = ?, QLPhong = ?, QLLoaiPhong = ?, QLDichVu = ?, 
+             QLLoaiDichVu = ?, QLTienNghi = ?, QLNhanVien = ?, QLTaiKhoan = ?, 
+             ThongKe = ?, ThongBao = ?, LichSuHoatDong = ?
              WHERE MaPQ = ?`,
             [accountId, ...permissions, roleId]
         );

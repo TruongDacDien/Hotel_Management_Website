@@ -17,22 +17,22 @@ class ChatSession {
     }
 
     async create(data) {
-        const { customerId, temporarySender, startTime, endTime, status } = data;
+        const { customerId, temporarySender, startTime, endTime, status, expirationTime } = data;
         await this.pool.query(
-            `INSERT INTO PhienChat (MaKH, NguoiGuiTamThoi, ThoiGianBD, ThoiGianKT, TrangThai)
-             VALUES (?, ?, ?, ?, ?)`,
-            [customerId, temporarySender, startTime, endTime, status]
+            `INSERT INTO PhienChat (MaKH, NguoiGuiTamThoi, ThoiGianBD, ThoiGianKT, TrangThai, ThoiGianHetHan)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [customerId, temporarySender, startTime, endTime, status, expirationTime]
         );
         return data;
     }
 
     async update(sessionId, data) {
-        const { customerId, temporarySender, startTime, endTime, status } = data;
+        const { customerId, temporarySender, startTime, endTime, status, expirationTime } = data;
         await this.pool.query(
             `UPDATE PhienChat
-             SET MaKH = ?, NguoiGuiTamThoi = ?, ThoiGianBD = ?, ThoiGianKT = ?, TrangThai = ?
+             SET MaKH = ?, NguoiGuiTamThoi = ?, ThoiGianBD = ?, ThoiGianKT = ?, TrangThai = ?, ThoiGianHetHan = ?
              WHERE MaPC = ?`,
-            [customerId, temporarySender, startTime, endTime, status, sessionId]
+            [customerId, temporarySender, startTime, endTime, status, expirationTime, sessionId]
         );
         return { sessionId, ...data };
     }

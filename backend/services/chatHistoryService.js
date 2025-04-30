@@ -23,14 +23,6 @@ class ChatHistoryService {
         return chats;
     }
 
-    async getChatHistoryByEmployeeId(employeeId) {
-        const chats = await this.chatHistoryModel.getByEmployeeId(employeeId);
-        if (!chats || chats.length === 0) {
-            throw new Error('No chat history found for this employee');
-        }
-        return chats;
-    }
-
     async createChatHistory(chatData) {
         // Validate required fields
         if (!chatData.MaPC || !chatData.NguoiGui || !chatData.NoiDung) {

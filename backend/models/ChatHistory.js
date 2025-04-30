@@ -11,7 +11,7 @@ class ChatHistory {
 
     // Get chat history by ID
     async getById(id) {
-        const [rows] = await this.pool.query('SELECT * FROM LichSuChat WHERE MaLS = ?', [id]);
+        const [rows] = await this.pool.query('SELECT * FROM LichSuChat WHERE MaLSC = ?', [id]);
         return rows[0];
     }
 
@@ -21,35 +21,29 @@ class ChatHistory {
         return rows;
     }
 
-    // Get chat history by employee ID
-    async getByEmployeeId(employeeId) {
-        const [rows] = await this.pool.query('SELECT * FROM LichSuChat WHERE MaNV = ? ORDER BY ThoiGianGui', [employeeId]);
-        return rows;
-    }
-
     // Create new chat history
     async create(chatData) {
-        const { MaPC, MaNV, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo, ThoiGianHetHan } = chatData;
+        const { MaPC, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo } = chatData;
         const [result] = await this.pool.query(
-            'INSERT INTO LichSuChat (MaPC, MaNV, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo, ThoiGianHetHan) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [MaPC, MaNV, NguoiGui, NoiDung, ThoiGianGui || new Date(), MaLSTruocDo, ThoiGianHetHan]
+            'INSERT INTO LichSuChat (MaPC, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo) VALUES (?, ?, ?, ?, ?)',
+            [MaPC, NguoiGui, NoiDung, ThoiGianGui || new Date(), MaLSTruocDo]
         );
-        return { MaLS: result.insertId, ...chatData };
+        return { MaLSC: result.insertId, ...chatData };
     }
 
     // Update chat history
     async update(id, chatData) {
-        const { MaPC, MaNV, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo, ThoiGianHetHan } = chatData;
+        const { MaPC, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo } = chatData;
         await this.pool.query(
-            'UPDATE LichSuChat SET MaPC = ?, MaNV = ?, NguoiGui = ?, NoiDung = ?, ThoiGianGui = ?, MaLSTruocDo = ?, ThoiGianHetHan = ? WHERE MaLS = ?',
-            [MaPC, MaNV, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo, ThoiGianHetHan, id]
+            'UPDATE LichSuChat SET MaPC = ?, NguoiGui = ?, NoiDung = ?, ThoiGianGui = ?, MaLSTruocDo = ? WHERE MaLSC = ?',
+            [MaPC, NguoiGui, NoiDung, ThoiGianGui, MaLSTruocDo, id]
         );
-        return { MaLS: id, ...chatData };
+        return { MaLSC: id, ...chatData };
     }
 
     // Delete chat history
     async delete(id) {
-        await this.pool.query('DELETE FROM LichSuChat WHERE MaLS = ?', [id]);
+        await this.pool.query('DELETE FROM LichSuChat WHERE MaLSC = ?', [id]);
         return true;
     }
 }
