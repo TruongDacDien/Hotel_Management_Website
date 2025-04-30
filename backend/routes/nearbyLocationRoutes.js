@@ -17,5 +17,6 @@ router.get('/branch/:branchId', nearbyLocationController.getLocationsByBranchId)
 router.post('/', nearbyLocationController.createNearbyLocation);
 router.put('/:id', nearbyLocationController.updateNearbyLocation);
 router.delete('/:id', nearbyLocationController.deleteNearbyLocation);
+router.post('/fetch', nearbyLocationController.fetchAndSaveNearbyLocations);
 
 module.exports = router;

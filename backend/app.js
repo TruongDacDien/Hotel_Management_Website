@@ -1,29 +1,52 @@
 // app.js
 const express = require('express');
-//const bodyParser = require('body-parser');
-const branchRoutes = require('./routes/branchRoutes');
-const customerRoutes = require('./routes/customerRoutes');
-const bookingDetailRoutes = require('./routes/bookingDetailRoutes');
-//const roomRoutes = require('./routes/roomRoutes');
-// ... import other routes
-
 const app = express();
+const amenityRoutes = require('./routes/amenityRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const bookingDetailRoutes = require('./routes/bookingDetailRoutes');
+const branchRoutes = require('./routes/branchRoutes');
+const chatHistoryRoutes = require('./routes/chatHistoryRoutes');
+const chatSessionRoutes = require('./routes/chatSessionRoutes');
+const customerAccountRoutes = require('./routes/customerAccountRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const employeeAccountRoutes = require('./routes/employeeAccountRoutes');
+const employeeActivityRoutes = require('./routes/employeeActivityRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
+const nearbyLocationRoutes = require('./routes/nearbyLocationRoutes');
+const roleRoutes = require('./routes/roleRoutes');
+const roomAmenityDetailRoutes = require('./routes/roomAmenityDetailRoutes');
+const roomRoutes = require('./routes/roomRoutes');
+const roomTypeRoutes = require('./routes/roomTypeRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
+const serviceTypeRoutes = require('./routes/serviceTypeRoutes');
+const serviceUsageDetailRoutes = require('./routes/serviceUsageDetailRoutes');
 
 // Middleware
-// app.use(bodyParser.json());
+app.use(express.json());
+
 
 // Routes
-app.use('/api/branches', branchRoutes);
-app.use('/api/customers', customerRoutes);
+app.use('/api/amenities', amenityRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/bookingDetails', bookingDetailRoutes);
-// app.use('/api/rooms', roomRoutes);
-// ... other routes
-
-// Error handling middleware
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(500).json({ error: err.message });
-// });
+app.use('/api/branches', branchRoutes);
+app.use('/api/chatHistories', chatHistoryRoutes);
+app.use('/api/chatSessions', chatSessionRoutes);
+app.use('/api/customerAccounts', customerAccountRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/employeeAccounts', employeeAccountRoutes);
+app.use('/api/employeeActivities', employeeActivityRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/nearbyLocations', nearbyLocationRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/roomAmenityDetails', roomAmenityDetailRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/roomTypes', roomTypeRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/serviceTypes', serviceTypeRoutes);
+app.use('/api/serviceUsageDetails', serviceUsageDetailRoutes);
 
 const PORT = process.env.DB_PORT || 5000;
 app.listen(PORT, () => {

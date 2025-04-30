@@ -9,6 +9,7 @@ class NearbyLocationController {
         this.createNearbyLocation = this.createNearbyLocation.bind(this);
         this.updateNearbyLocation = this.updateNearbyLocation.bind(this);
         this.deleteNearbyLocation = this.deleteNearbyLocation.bind(this);
+        this.fetchAndSaveNearbyLocations = this.fetchAndSaveNearbyLocations.bind(this);
     }
 
     async getAllNearbyLocations(req, res, next) {
@@ -63,6 +64,21 @@ class NearbyLocationController {
         try {
             await this.nearbyLocationService.deleteNearbyLocation(req.params.id);
             res.status(204).end();
+        } catch (err) {
+            next(err);
+        }
+    } 
+
+    async fetchAndSaveNearbyLocations(req, res, next) {
+        const { branchId, radius, type } = req.body;
+
+        if (!branchId || !radius || !type) {
+            return res.status(400).json({ error: 'Missing branchId, radius, or type' });
+        }
+
+        try {
+            await this.nearbyLocationService.fetchAndSaveNearbyLocations(branchId, radius, type);
+            res.status(201).json({ message: 'Nearby locations fetched and saved successfully.' });
         } catch (err) {
             next(err);
         }

@@ -53,6 +53,10 @@ class NearbyLocationService {
         await this.getNearbyLocationById(id); // Check if exists
         return this.nearbyLocationModel.delete(id);
     }
+
+    async fetchAndSaveNearbyLocations(branchId, radius, type) {
+        return this.nearbyLocationModel.fetchAndSaveNearbyLocations(branchId, radius, type);
+    }
 }
 
 module.exports = NearbyLocationService;
