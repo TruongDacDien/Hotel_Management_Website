@@ -19,10 +19,11 @@ export default function GallerySection() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-            Experience Elysian
+            Hotel
           </h2>
           <p className="text-neutral-700 max-w-2xl mx-auto">
-            Take a visual journey through our exquisite spaces and experiences.
+            Hãy tham gia chuyến hành trình trực quan qua những không gian và
+            trải nghiệm tuyệt vời của chúng tôi.
           </p>
         </div>
 

@@ -44,11 +44,11 @@ export default function Amenities() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Premium Amenities
+            Tiện nghi cao cấp
           </h2>
           <p className="max-w-2xl mx-auto">
-            Every aspect of our hotel is designed to provide comfort and
-            convenience, ensuring an exceptional stay.
+            Mọi khía cạnh của khách sạn chúng tôi đều được thiết kế để mang lại
+            sự thoải mái và tiện lợi, đảm bảo một kỳ nghỉ tuyệt vời.
           </p>
         </div>
 

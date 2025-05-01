@@ -26,10 +26,10 @@ export default function Testimonials() {
       <div className="w-full mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-            Guest Experiences
+            Trải nghiệm khách hàng
           </h2>
           <p className="text-neutral-700 max-w-2xl mx-auto">
-            Discover what our guests have to say about their stay with us.
+            Khám phá những gì khách hàng nói về kỳ nghỉ của họ tại đây.
           </p>
         </div>
 

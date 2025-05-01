@@ -16,11 +16,11 @@ export default function Hero() {
       <div className="relative z-10 h-full flex items-center">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Experience Unparalleled Luxury
+            Trải nghiệm sự sang trọng
           </h1>
           <p className="text-xl md:text-2xl text-white mb-10 max-w-2xl mx-auto">
-            Discover the perfect blend of elegance, comfort, and exceptional
-            service at Elysian Retreat.
+            Khám phá sự kết hợp hoàn hảo giữa sự thanh lịch, thoải mái và dịch
+            vụ đặc biệt tại khách sạn của chúng tôi.
           </p>
           <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
             <Link to="/#waitlist">
@@ -28,7 +28,7 @@ export default function Hero() {
                 size="lg"
                 className="bg-amber-300 hover:bg-amber-400 text-neutral-800 cursor-pointer"
               >
-                Join Waitlist
+                Đặt ngay
               </Button>
             </Link>
             <Link to="/rooms">
@@ -37,7 +37,7 @@ export default function Hero() {
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-primary cursor-pointer"
               >
-                Explore Rooms
+                Xem phòng
               </Button>
             </Link>
           </div>

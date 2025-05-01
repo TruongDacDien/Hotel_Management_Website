@@ -60,19 +60,21 @@ export default function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-8">
-          <NavLink to="/rooms">Rooms</NavLink>
-          <NavLink to="/services">Services</NavLink>
+          <NavLink to="/rooms">Phòng</NavLink>
+          <NavLink to="/services">Dịch vụ</NavLink>
           <NavLink to="/#amenities" onClick={handleAmenitiesClick}>
-            Amenities
+            Tiện nghi
           </NavLink>
           <NavLink to="/#gallery" onClick={handleGalleryClick}>
-            Gallery
+            Phòng trưng bày
           </NavLink>
           <div className="flex items-center space-x-4">
             <CartIcon />
             {user ? (
               <div className="flex items-center space-x-3">
-                <span className="text-sm">Hi, {user.name?.split(" ")[0]}</span>
+                <span className="text-sm">
+                  Chào, {user.name?.split(" ")[0]}
+                </span>
                 {user.isAdmin && (
                   <Link to="/admin">
                     <Button
@@ -90,7 +92,7 @@ export default function Header() {
                   onClick={handleLogout}
                   className="flex items-center"
                 >
-                  <LogOut className="h-4 w-4 mr-1" /> Logout
+                  <LogOut className="h-4 w-4 mr-1" /> Đăng xuất
                 </Button>
               </div>
             ) : (
@@ -101,7 +103,7 @@ export default function Header() {
                     size="sm"
                     className="flex items-center"
                   >
-                    <LogIn className="h-4 w-4 mr-1" /> Sign In
+                    <LogIn className="h-4 w-4 mr-1" /> Đăng nhập
                   </Button>
                 </Link>
                 {/* <Link to="/auth?tab=register">
@@ -117,7 +119,7 @@ export default function Header() {
             )}
             <Link to="/rooms">
               <Button className="bg-black text-white cursor-pointer">
-                Book Now
+                Đặt ngay
               </Button>
             </Link>
           </div>

@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "../../hooks/use-toast";
 import { useCart } from "../../hooks/use-cart";
+import { amenityIcons } from "../../constants/amenityIcons";
+import { Users, Calendar } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -24,22 +26,13 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog";
 import { Separator } from "../../components/ui/separator";
-import {
-  Users,
-  Ruler,
-  Calendar,
-  CheckCircle,
-  Wifi as WifiIcon,
-  Coffee as CoffeeIcon,
-  Tv as TvIcon,
-  Bed as BedIcon,
-  Droplets as ShowerIcon,
-} from "lucide-react";
+
+import { getRoomTypeById, getAmentitesRoomDetails } from "../../config/api";
 // import ReviewList from "../../components/reviews/ReviewList";
 // import ReviewForm from "../../components/reviews/ReviewForm";
 
 export default function RoomDetailPage() {
-  const rooms = mockRooms;
+  const [amentites, setAmentites] = useState([]);
   const { id } = useParams();
   const { toast } = useToast();
   const [room, setRoom] = useState(null);
@@ -53,57 +46,65 @@ export default function RoomDetailPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setIsLoading(true);
 
-    // Tìm phòng từ rooms dựa trên id
-    setIsLoading(true); // Bắt đầu tải
-    try {
-      console.log(typeof id, typeof rooms[0].id);
+    const fetchRoomTypeById = async () => {
+      try {
+        const response = await getRoomTypeById(id);
+        if (response) {
+          setRoom(response);
+        } else {
+          throw new Error("Không tìm thấy phòng");
+        }
 
-      const foundRoom = rooms.find((r) => r.id == id);
-      console.log(foundRoom);
-
-      if (foundRoom) {
-        setRoom(foundRoom);
-        setIsLoading(false); // Kết thúc tải
-      } else {
-        throw new Error("Không tìm thấy phòng");
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching room type by id", error);
+        setError(error);
+        setIsLoading(false);
       }
-    } catch (err) {
-      setError(err);
-      setIsLoading(false); // Kết thúc tải, có lỗi
-    }
-  }, [id, rooms]);
+    };
+
+    fetchRoomTypeById();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const response = await getAmentitesRoomDetails();
+        if (response) {
+          setAmentites(response);
+        }
+      } catch {
+        throw new Error("There is an error while getting amentities");
+      }
+    };
+    fetchRooms();
+  }, []);
 
   if (isLoading) {
     return <RoomDetailSkeleton />;
   }
+  console.log(room.TenLoaiPhong);
 
   if (error || !room) {
     return (
       <div className="container mx-auto px-4 py-32 text-center">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">
-          Error Loading Room
-        </h1>
-        <p className="mb-6">We couldn't find the room you're looking for.</p>
+        <h1 className="text-2xl font-bold text-red-500 mb-4">Lỗi tìm phòng</h1>
+        <p className="mb-6">
+          Chúng tôi không thể tìm thấy phòng mà bạn yêu cầu.
+        </p>
         <Button asChild>
-          <Link to="/rooms">View All Rooms</Link>
+          <Link to="/rooms">Xem tất cả phòng</Link>
         </Button>
       </div>
     );
   }
 
   // Get the appropriate icon for an amenity
-  const getAmenityIcon = (amenity) => {
-    if (amenity.includes("Wi-Fi")) return <WifiIcon className="h-5 w-5" />;
-    if (amenity.includes("Mini Bar") || amenity.includes("Bar"))
-      return <CoffeeIcon className="h-5 w-5" />;
-    if (amenity.includes("TV")) return <TvIcon className="h-5 w-5" />;
-    if (amenity.includes("Butler") || amenity.includes("Service"))
-      return <CheckCircle className="h-5 w-5" />;
-    if (amenity.includes("Jacuzzi") || amenity.includes("Shower"))
-      return <ShowerIcon className="h-5 w-5" />;
-    return <BedIcon className="h-5 w-5" />;
-  };
+  const roomAmenities = amentites
+    .filter((item) => item.MaLoaiPhong === room.MaLoaiPhong)
+    .map((item) => item.TenTN);
 
   return (
     <div className="pt-24 pb-20">
@@ -111,19 +112,18 @@ export default function RoomDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <h1 className="text-3xl font-bold text-primary mb-3">
-              {room.name}
+              {room.TenLoaiPhong}
             </h1>
             <div className="flex flex-wrap items-center gap-4 mb-6">
               <Badge className="bg-amber-300 hover:bg-amber-300 text-neutral-800 text-sm">
-                ${room.price} / night
+                {room.GiaNgay}VNĐ / ngày
+              </Badge>
+              <Badge className="bg-amber-300 hover:bg-amber-300 text-neutral-800 text-sm">
+                {room.GiaGio}VNĐ / giờ
               </Badge>
               <div className="flex items-center text-neutral-600 text-sm">
                 <Users className="h-4 w-4 mr-1" />
-                <span>Up to {room.capacity} guests</span>
-              </div>
-              <div className="flex items-center text-neutral-600 text-sm">
-                <Ruler className="h-4 w-4 mr-1" />
-                <span>{room.size} m²</span>
+                <span>Tối đa {room.SoNguoiToiDa} khách</span>
               </div>
             </div>
 
@@ -131,51 +131,49 @@ export default function RoomDetailPage() {
               <DialogTrigger asChild>
                 <div className="relative rounded-lg overflow-hidden cursor-pointer mb-8">
                   <img
-                    src={room.imageUrl}
-                    alt={room.name}
+                    src={room.ImageURL}
+                    alt={room.TenLoaiPhong}
                     className="w-full h-auto object-cover rounded-lg"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-25 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                     <span className="text-white font-semibold">
-                      Click to view larger image
+                      Nhấp để xem ảnh phóng to
                     </span>
                   </div>
                 </div>
               </DialogTrigger>
               <DialogContent className="p-0 max-w-5xl overflow-hidden">
                 <img
-                  src={room.imageUrl}
-                  alt={room.name}
+                  src={room.ImageURL}
+                  alt={room.TenLoaiPhong}
                   className="w-full h-auto"
                 />
               </DialogContent>
             </Dialog>
 
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-primary mb-4">
-                Description
-              </h2>
+              <h2 className="text-2xl font-bold text-primary mb-4">Mô tả</h2>
               <p className="text-neutral-700 leading-relaxed mb-4">
-                {room.description}
+                {room.MoTa}
               </p>
-              <p className="text-neutral-700 leading-relaxed">
+              {/* <p className="text-neutral-700 leading-relaxed">
                 Our {room.name.toLowerCase()} offers a perfect blend of luxury
                 and comfort, designed to provide you with an unforgettable stay
                 experience. From the premium linens to the carefully selected
                 furnishings, every detail has been thoughtfully considered to
                 enhance your comfort and relaxation.
-              </p>
+              </p> */}
             </div>
 
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-primary mb-4">
-                Amenities
+                Tiện nghi
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {room.amenities.map((amenity, index) => (
+                {roomAmenities.map((amenity, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                      {getAmenityIcon(amenity)}
+                      {amenityIcons[amenity] || null}
                     </div>
                     <span className="text-neutral-700">{amenity}</span>
                   </div>
@@ -184,27 +182,31 @@ export default function RoomDetailPage() {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-primary mb-4">Policies</h2>
+              <h2 className="text-2xl font-bold text-primary mb-4">
+                Chính sách
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-bold text-neutral-800 mb-2">
-                    Check-in & Check-out
+                    Nhận phòng & Trả phòng
                   </h3>
                   <ul className="text-neutral-700 space-y-2">
-                    <li>Check-in: 3:00 PM - 12:00 AM</li>
-                    <li>Check-out: 11:00 AM</li>
-                    <li>Early check-in available upon request</li>
-                    <li>Late check-out available upon request</li>
+                    <li>Nhận phòng : 3:00 PM - 12:00 AM</li>
+                    <li>Trả phòng: 11:00 AM</li>
+                    <li>Có thể nhận phòng sớm theo yêu cầu</li>
+                    <li>Có thể trả phòng trễ theo yêu cầu</li>
                   </ul>
                 </div>
                 <div>
                   <h3 className="font-bold text-neutral-800 mb-2">
-                    Cancellation Policy
+                    Chính sách hủy
                   </h3>
                   <ul className="text-neutral-700 space-y-2">
-                    <li>Free cancellation up to 48 hours before check-in</li>
-                    <li>50% refund for cancellations within 48 hours</li>
-                    <li>No refund for no-shows</li>
+                    <li>
+                      Miễn phí hủy phòng trước 48 giờ so với giờ nhận phòng
+                    </li>
+                    <li>Hoàn 50% cho các đơn hủy trong vòng 48 giờ</li>
+                    <li>Không hoàn tiền đối với trường hợp không đến</li>
                   </ul>
                 </div>
               </div>
@@ -237,8 +239,8 @@ export default function RoomDetailPage() {
           <div className="lg:col-span-1">
             <BookingForm
               roomId={parseInt(id)}
-              roomName={room.name}
-              price={room.price}
+              roomName={room?.TenLoaiPhong}
+              price={room?.GiaNgay}
               setBookingSuccess={setBookingSuccess}
             />
           </div>
@@ -331,21 +333,21 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
   return (
     <Card>
       <CardContent className="p-6">
-        <h2 className="text-xl font-bold text-primary mb-2">Book This Room</h2>
+        <h2 className="text-xl font-bold text-primary mb-2">Đặt phòng này</h2>
         <p className="text-neutral-700 mb-6">
-          Reserve your stay in our {roomName.toLowerCase()} and enjoy a
-          luxurious experience.
+          Hãy đặt phòng tại {(roomName || "").toLowerCase()} của chúng tôi và
+          tận hưởng trải nghiệm sang trọng.
         </p>
 
         {bookingMutation.isSuccess ? (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              <h3 className="font-bold">Added to Cart!</h3>
+              <h3 className="font-bold">Đã thêm vào giỏ hàng!</h3>
             </div>
             <p className="mb-4">
-              This room has been added to your cart. You can continue shopping
-              or proceed to checkout.
+              Phòng này đã được thêm vào giỏ hàng của bạn. Bạn có thể tiếp tục
+              mua sắm hoặc tiến hành thanh toán.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <Button
@@ -353,10 +355,10 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                 onClick={() => setBookingSuccess(false)}
                 variant="outline"
               >
-                Book Another Room
+                Đặt phòng khác
               </Button>
               <Button className="w-full" onClick={() => navigate("/cart")}>
-                View Cart
+                Xem giỏ hàng
               </Button>
             </div>
           </div>
@@ -364,14 +366,14 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
           <>
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex justify-between mb-2">
-                <span className="text-neutral-700">Price per night</span>
-                <span className="font-semibold">${price}</span>
+                <span className="text-neutral-700">Giá qua đêm</span>
+                <span className="font-semibold">{price} VNĐ</span>
               </div>
               <Separator className="my-2" />
-              <div className="flex justify-between">
-                <span className="font-semibold text-neutral-800">Total</span>
-                <span className="font-bold text-primary">${price}</span>
-              </div>
+              {/* <div className="flex justify-between">
+                <span className="font-semibold text-neutral-800">Tổng</span>
+                <span className="font-bold text-primary">{price} VNĐ</span>
+              </div> */}
             </div>
 
             <Form {...form}>
@@ -384,7 +386,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Họ và tên</FormLabel>
                       <FormControl>
                         <Input placeholder="John Doe" {...field} />
                       </FormControl>
@@ -398,7 +400,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input placeholder="john@example.com" {...field} />
                       </FormControl>
@@ -412,7 +414,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel>Số điện thoại</FormLabel>
                       <FormControl>
                         <Input placeholder="+1 (123) 456-7890" {...field} />
                       </FormControl>
@@ -427,7 +429,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                     name="checkIn"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Check-in Date</FormLabel>
+                        <FormLabel>Ngày nhận phòng</FormLabel>
                         <FormControl>
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-2 text-neutral-500" />
@@ -444,7 +446,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                     name="checkOut"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Check-out Date</FormLabel>
+                        <FormLabel>Ngày trả phòng</FormLabel>
                         <FormControl>
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-2 text-neutral-500" />
@@ -461,8 +463,9 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
                   type="submit"
                   className="w-full"
                   disabled={bookingMutation.isPending}
+                  variant="custom"
                 >
-                  {bookingMutation.isPending ? "Processing..." : "Book Now"}
+                  {bookingMutation.isPending ? "Đang xử lí..." : "Đặt ngay"}
                 </Button>
               </form>
             </Form>

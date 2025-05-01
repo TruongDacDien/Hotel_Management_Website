@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
 import RoomCard from "../../components/cart/RoomCart";
-import { Wifi, Snowflake, Tv, ArrowRight, Ruler } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -12,47 +8,23 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../../components/ui/carousel";
+import { getAllRoomTypes } from "../../config/api";
 
 export default function RoomsList({ featured = true }) {
-  const mockRooms = [
-    {
-      id: 1,
-      name: "Luxury Suite",
-      description: "A spacious suite with an ocean view.",
-      imageUrl:
-        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      price: 250,
-      amenities: ["Wi-Fi", "Air Conditioning", "TV"],
-      size: 45,
-    },
-    {
-      id: 2,
-      name: "Deluxe Room",
-      description: "A comfortable room with a city skyline view.",
-      imageUrl:
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      price: 180,
-      amenities: ["Wi-Fi", "Air Conditioning"],
-      size: 35,
-    },
-    {
-      id: 3,
-      name: "Classic Room",
-      description: "A cozy room for a relaxing stay.",
-      imageUrl:
-        "https://images.unsplash.com/photo-1618773928121-c32242e63f39?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      price: 120,
-      amenities: ["Wi-Fi", "TV"],
-      size: 30,
-    },
-  ];
-
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
-    setTimeout(() => {
-      setRooms(mockRooms);
-    }, 1000);
+    const fetchRooms = async () => {
+      try {
+        const response = await getAllRoomTypes();
+        if (response) {
+          setRooms(response);
+        }
+      } catch {
+        throw new Error("There is an error while getting room");
+      }
+    };
+    fetchRooms();
   }, []);
 
   return (
@@ -61,11 +33,11 @@ export default function RoomsList({ featured = true }) {
         {featured && (
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-              Luxurious Accommodations
+              Nơi ở sang trọng
             </h2>
             <p className="text-neutral-700 max-w-2xl mx-auto">
-              Each room is thoughtfully designed to provide the utmost comfort
-              and elegance.
+              Mỗi phòng đều được thiết kế chu đáo để mang đến sự thoải mái và
+              sang trọng tối đa.
             </p>
           </div>
         )}
@@ -76,7 +48,7 @@ export default function RoomsList({ featured = true }) {
                 <CarouselPrevious className="h-12 w-12 rounded-full shadow-lg bg-white/80 hover:bg-white" />
               </div>
               <CarouselContent>
-                {rooms.map((room) => (
+                {rooms.slice(0, 5).map((room) => (
                   <CarouselItem
                     key={room.id}
                     className="md:basis-1/2 lg:basis-1/3 pl-4"
@@ -93,7 +65,7 @@ export default function RoomsList({ featured = true }) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mx-5 my-5">
             {rooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
+              <RoomCard key={room.MaLoaiPhong} room={room} />
             ))}
           </div>
         )}
