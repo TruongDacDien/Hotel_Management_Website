@@ -1,5 +1,5 @@
 // utils/imageUtils.js
-const { cloudinary } = require('../config/cloudinary');
+import { v2 as cloudinary } from "cloudinary";
 
 class ImageUtils {
   static async uploadImage(filePath, folder = 'general') {

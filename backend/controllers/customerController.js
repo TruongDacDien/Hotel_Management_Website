@@ -1,5 +1,5 @@
 // controllers/customerController.js
-const uploadImage = require('../middlewares/uploadMiddleware');
+const uploadImage = require('../middlewares/uploadImage');
 
 class CustomerController {
     constructor(customerService) {

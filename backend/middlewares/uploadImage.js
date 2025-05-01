@@ -1,4 +1,4 @@
-// middlewares/uploadMiddleware.js
+// middlewares/uploadImage.js
 const multer = require('multer');
 const { storage } = require('../config/cloudinary');
 
@@ -12,6 +12,8 @@ const uploadImage = multer({
       cb(new Error('Only image files are allowed!'), false);
     }
   }
-});
+}); 
+
+
 
 module.exports = uploadImage;

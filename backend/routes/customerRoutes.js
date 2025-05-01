@@ -5,7 +5,7 @@ const CustomerController = require('../controllers/customerController');
 const CustomerService = require('../services/customerService');
 const Customer = require('../models/Customer');
 const pool = require('../config/database');
-const uploadImage = require('../middlewares/uploadMiddleware');
+const uploadImage = require('../middlewares/uploadImage');
 
 // Khởi tạo dependency
 const customerModel = new Customer(pool);
