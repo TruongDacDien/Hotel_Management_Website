@@ -70,15 +70,10 @@ class NearbyLocationController {
     } 
 
     async fetchAndSaveNearbyLocations(req, res, next) {
-        const { branchId, radius, type } = req.body;
-
-        if (!branchId || !radius || !type) {
-            return res.status(400).json({ error: 'Missing branchId, radius, or type' });
-        }
-
         try {
-            await this.nearbyLocationService.fetchAndSaveNearbyLocations(branchId, radius, type);
-            res.status(201).json({ message: 'Nearby locations fetched and saved successfully.' });
+            const { branchId, radius, type, limit } = req.body;
+            const nearbyLocation = await this.nearbyLocationService.fetchAndSaveNearbyLocations(branchId, radius, type, limit);
+            res.status(201).json(nearbyLocation);
         } catch (err) {
             next(err);
         }
