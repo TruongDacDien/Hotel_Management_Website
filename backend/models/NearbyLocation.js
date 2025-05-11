@@ -6,6 +6,30 @@ class NearbyLocation {
         this.pool = pool;
     }
 
+    // Ánh xạ type sang tên tiếng Việt
+    typeMapping = {
+        restaurant: "Nhà hàng",
+        hotel: "Khách sạn",
+        cafe: "Quán cà phê",
+        bar: "Quán bar",
+        amusement_park: "Công viên giải trí",
+        aquarium: "Thủy cung",
+        bowling_alley: "Sân chơi bowling",
+        casino: "Sòng bạc",
+        movie_theater: "Rạp chiếu phim",
+        museum: "Bảo tàng",
+        night_club: "Câu lạc bộ đêm",
+        park: "Công viên",
+        tourist_attraction: "Điểm tham quan du lịch",
+        zoo: "Sở thú",
+        lodging: "Nhà nghỉ",
+        rv_park: "Khu cắm trại RV",
+        campground: "Khu cắm trại",
+        gym: "Phòng tập thể dục",
+        stadium: "Sân vận động",
+        spa: "Trung tâm spa"
+    };
+
     // Get all nearby locations
     async getAll() {
         const [rows] = await this.pool.query('SELECT * FROM DiaDiemXungQuanh');
@@ -25,152 +49,205 @@ class NearbyLocation {
     }
 
     // Create new nearby location
-    // async create(locationData) {
-    //     const { MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach } = locationData;
-    //     const [result] = await this.pool.query(
-    //         'INSERT INTO DiaDiemXungQuanh (MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach, ThoiGianCapNhat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-    //         [MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach]
-    //     );
-    //     return { MaDD: result.insertId, ...locationData };
-    // } 
-
     async create(locationData) {
-        const { MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach } = locationData;
-      
+        const { MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach, ThoiGianDiChuyen, ThoiGianCapNhat } = locationData;
+
         const [rows] = await this.pool.query(
-            'INSERT INTO DiaDiemXungQuanh (MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach]
+            'INSERT INTO DiaDiemXungQuanh (MaCN, TenDD, LoaiDD, DiaChi, DanhGia, KinhDo, ViDo, KhoangCach, ThoiGianDiChuyen, ThoiGianCapNhat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            [MaCN, TenDD, LoaiDD, DiaChi, DanhGia, KinhDo, ViDo, KhoangCach, ThoiGianDiChuyen, ThoiGianCapNhat]
         );
-      
+
         return rows;
     }
 
-    // async fetchAndSaveNearbyLocations(branchId, radius, type) {
-    //     // Lấy tọa độ từ bảng ChiNhanh
-    //     const [rows] = await this.pool.query(
-    //         'SELECT KinhDo, ViDo FROM ChiNhanh WHERE MaCN = ?',
-    //         [branchId]
-    //     );
-    
-    //     if (rows.length === 0) {
-    //         throw new Error(`Không tìm thấy chi nhánh với MaCN = ${branchId}`);
-    //     }
-    
-    //     const { KinhDo, ViDo } = rows[0];
-    //     const location = `${ViDo},${KinhDo}`;
-    
-    //     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
-    
-    //     try {
-    //         const response = await axios.get(url);
-    //         const places = response.data.results;
-    
-    //         // 🔥 Chỉ lấy 5 địa điểm đầu tiên
-    //         const limitedPlaces = places.slice(0, 5);
-    
-    //         for (const place of limitedPlaces) {
-    //             const locationData = {
-    //                 MaCN: branchId,
-    //                 TenDD: place.name,
-    //                 LoaiDD: place.types,
-    //                 DiaChi: place.vicinity || '',
-    //                 MoTa: place.opening_hours?.open_now ? 'Open now' : 'Closed',
-    //                 DanhGia: place.rating || null,
-    //                 KinhDo: place.geometry.location.lng,
-    //                 ViDo: place.geometry.location.lat,
-    //                 KhoangCach: 0, // Cập nhật nếu cần tính khoảng cách thực tế
+    async fetchAndSaveNearbyLocations(branchId, radius, type, limit = 7) {
+        // Kiểm tra biến môi trường
+        if (!process.env.GOOGLE_API_KEY) {
+            throw new Error('Thiếu GOOGLE_API_KEY trong biến môi trường');
+        }
 
-    //             };
-    //             await this.create(locationData);
-    //         }
-    //     } catch (error) {
-    //         console.error('Lỗi khi gọi Google Places API:', error);
-    //         throw error;
-    //     }
-    // }
-    
-    mapTypeToCategory(type) {
-        const map = {
-            restaurant: '13065',
-            hotel: '19014',
-            cafe: '13032',
-            bar: '13003',
-            mall: '19009',
-            bank: '11100',
-            atm: '11111',
-            gas_station: '12040',
-            pharmacy: '17069',
-            supermarket: '17069'
-        };
-        return map[type] || '13000'; // fallback chung nếu không khớp
-    }
+        // Kiểm tra type hợp lệ
+        if (!this.typeMapping[type]) {
+            throw new Error(`Loại địa điểm không được hỗ trợ: ${type}`);
+        }
 
-    async fetchAndSaveNearbyLocations(branchId, radius, type) {
-        // Bước 1: Lấy toạ độ chi nhánh
-        const [rows] = await this.pool.query(
-            'SELECT ViDo, KinhDo FROM ChiNhanh WHERE MaCN = ?',
-            [branchId]
-        );
-    
+        // Truy vấn tọa độ chi nhánh
+        let rows;
+        try {
+            [rows] = await this.pool.query(
+                'SELECT KinhDo, ViDo FROM ChiNhanh WHERE MaCN = ?',
+                [branchId]
+            );
+        } catch (error) {
+            console.error('Lỗi khi truy vấn ChiNhanh:', error);
+            throw new Error(`Lỗi khi truy vấn chi nhánh với MaCN = ${branchId}`);
+        }
+
         if (rows.length === 0) {
             throw new Error(`Không tìm thấy chi nhánh với MaCN = ${branchId}`);
         }
-    
-        const { ViDo, KinhDo } = rows[0];
-        const latlng = `${ViDo},${KinhDo}`;
-    
-        // Bước 2: Gọi Foursquare API
-        const url = `https://api.foursquare.com/v3/places/search`;
-    
+
+        const { KinhDo, ViDo } = rows[0];
+        const origin = `${ViDo},${KinhDo}`;
+
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${origin}&radius=${radius}&type=${type}&language=vi&key=${process.env.GOOGLE_API_KEY}`;
+
         try {
-            const response = await axios.get(url, {
-                headers: {
-                    'Authorization': process.env.FOURSQUARE_API_KEY
-                },
-                params: {
-                    ll: latlng,
-                    radius: radius,
-                    categories: this.mapTypeToCategory(type),
-                    limit: 5
+            const response = await axios.get(url);
+            const places = response.data.results;
+
+            if (!places || places.length === 0) {
+                console.warn("Không có địa điểm nào được trả về từ Google Places API.");
+                return { message: "Không có địa điểm nào được trả về từ Google Places API." };
+            }
+
+            // Giới hạn số lượng địa điểm
+            const limitedPlaces = places.slice(0, limit);
+
+            // Lấy danh sách bản ghi hiện có trong DB với MaCN và LoaiDD
+            const loaiDD = this.typeMapping[type];
+            let existingLocations;
+            try {
+                [existingLocations] = await this.pool.query(
+                    'SELECT MaDD FROM DiaDiemXungQuanh WHERE MaCN = ? AND LoaiDD = ? ORDER BY MaDD ASC',
+                    [branchId, loaiDD]
+                );
+            } catch (error) {
+                console.error('Lỗi khi truy vấn bản ghi hiện có:', error);
+                throw new Error('Lỗi khi kiểm tra bản ghi hiện có');
+            }
+
+            // Tính toán số lượng bản ghi cần xử lý
+            const routePromises = limitedPlaces.map(async (place, index) => {
+                if (!place.geometry || !place.geometry.location) {
+                    console.warn(`Địa điểm ${place.name} thiếu thông tin tọa độ, bỏ qua.`);
+                    return null;
+                }
+                const destination = `${place.geometry.location.lat},${place.geometry.location.lng}`;
+                try {
+                    const routeData = await this.getRouteDistanceAndDuration(origin, destination);
+                    return { place, routeData, index };
+                } catch (error) {
+                    console.warn(`Không thể lấy tuyến đường cho địa điểm ${place.name}: ${error.message}`);
+                    return null;
                 }
             });
-    
-            const places = response.data.results;
-    
-            if (!places || places.length === 0) {
-                console.warn('Không tìm thấy địa điểm nào từ Foursquare.');
-                return;
-            }
-    
-            // Bước 3: Lưu vào DB
-            for (const place of places) {
+            const results = await Promise.all(routePromises);
+
+            // Lọc các kết quả hợp lệ
+            const validResults = results.filter(result => result !== null);
+
+            // Xử lý cập nhật hoặc tạo bản ghi
+            for (let i = 0; i < validResults.length; i++) {
+                const { place, routeData } = validResults[i];
                 const locationData = {
                     MaCN: branchId,
                     TenDD: place.name,
-                    LoaiDD: type,
-                    DiaChi: place.location?.formatted_address || place.location?.address || '',
-                    MoTa: place.categories?.[0]?.name || '',
-                    DanhGia: 5, // Foursquare không trả về rating miễn phí
-                    ViDo: place.geocodes.main.latitude,
-                    KinhDo: place.geocodes.main.longitude,
-                    KhoangCach: 0 // bạn có thể tính thêm nếu muốn
+                    LoaiDD: loaiDD,
+                    DiaChi: place.vicinity || '',
+                    DanhGia: place.rating || 0,
+                    ViDo: place.geometry.location.lat,
+                    KinhDo: place.geometry.location.lng,
+                    KhoangCach: routeData.distance,
+                    ThoiGianDiChuyen: routeData.duration,
                 };
-    
-                console.log('Saving Foursquare location:', locationData);
-                await this.create(locationData);
+                try {
+                    if (i < existingLocations.length) {
+                        // Cập nhật bản ghi hiện có
+                        const locationId = existingLocations[i].MaDD;
+                        console.log(`Updating location MaDD=${locationId}:`, locationData);
+                        await this.update(locationId, locationData);
+                    } else {
+                        // Tạo bản ghi mới
+                        console.log('Creating new location:', locationData);
+                        await this.create(locationData);
+                    }
+                } catch (error) {
+                    console.error(`Lỗi khi xử lý địa điểm ${locationData.TenDD}:`, error);
+                }
             }
+            return { message: `Đã xử lý ${validResults.length} địa điểm cho MaCN=${branchId} và LoaiDD=${loaiDD}` };
         } catch (error) {
-            console.error('Lỗi khi gọi Foursquare API:', error.response?.data || error.message);
+            console.error('Lỗi khi gọi Google Places API:', error);
             throw error;
+        }
+    }
+
+    // Get distance and duration from Routes API
+    async getRouteDistanceAndDuration(origin, destination) {
+        // Kiểm tra biến môi trường
+        if (!process.env.GOOGLE_API_KEY) {
+            throw new Error('Thiếu GOOGLE_API_KEY trong biến môi trường');
+        }
+
+        // Validate tọa độ
+        const [originLat, originLng] = origin.split(",").map(parseFloat);
+        const [destLat, destLng] = destination.split(",").map(parseFloat);
+
+        if (
+            !origin || !destination ||
+            isNaN(originLat) || isNaN(originLng) ||
+            isNaN(destLat) || isNaN(destLng)
+        ) {
+            throw new Error(`Tọa độ không hợp lệ: origin=${origin}, destination=${destination}`);
+        }
+
+        const url = `https://routes.googleapis.com/directions/v2:computeRoutes`;
+
+        try {
+            const response = await axios.post(
+                url,
+                {
+                    origin: {
+                        location: { latLng: { latitude: originLat, longitude: originLng } }
+                    },
+                    destination: {
+                        location: { latLng: { latitude: destLat, longitude: destLng } }
+                    },
+                    travelMode: "DRIVE",
+                    routingPreference: "TRAFFIC_AWARE",
+                    computeAlternativeRoutes: false,
+                    languageCode: "en-US",
+                    units: "METRIC"
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Goog-Api-Key": process.env.GOOGLE_API_KEY,
+                        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters"
+                    },
+                    timeout: 10000 // 10 giây
+                }
+            );
+
+            if (!response.data.routes || response.data.routes.length === 0) {
+                throw new Error('Không tìm được tuyến đường từ Routes API');
+            }
+
+            const route = response.data.routes[0];
+            if (!route.distanceMeters || !route.duration) {
+                throw new Error('Thiếu thông tin khoảng cách hoặc thời gian từ Routes API');
+            }
+
+            return {
+                distance: route.distanceMeters,
+                duration: route.duration
+            };
+        } catch (error) {
+            const errorMessage = error.response
+                ? `Lỗi Routes API: ${error.response.status} - ${JSON.stringify(error.response.data)}`
+                : `Lỗi khi gọi Routes API: ${error.message}`;
+            console.error(errorMessage);
+            throw new Error(errorMessage);
         }
     }
 
     // Update nearby location
     async update(id, locationData) {
-        const { MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach } = locationData;
+        const { MaCN, TenDD, LoaiDD, DiaChi, DanhGia, KinhDo, ViDo, KhoangCach, ThoiGianDiChuyen } = locationData;
         await this.pool.query(
-            'UPDATE DiaDiemXungQuanh SET MaCN = ?, TenDD = ?, LoaiDD = ?, DiaChi = ?, MoTa = ?, DanhGia = ?, KinhDo = ?, ViDo = ?, KhoangCach = ?, ThoiGianCapNhat = NOW() WHERE MaDD = ?',
-            [MaCN, TenDD, LoaiDD, DiaChi, MoTa, DanhGia, KinhDo, ViDo, KhoangCach, id]
+            'UPDATE DiaDiemXungQuanh SET MaCN = ?, TenDD = ?, LoaiDD = ?, DiaChi = ?, DanhGia = ?, KinhDo = ?, ViDo = ?, KhoangCach = ?, ThoiGianDiChuyen = ?, ThoiGianCapNhat = NOW() WHERE MaDD = ?',
+            [MaCN, TenDD, LoaiDD, DiaChi, DanhGia, KinhDo, ViDo, KhoangCach, ThoiGianDiChuyen, id]
         );
         return { MaDD: id, ...locationData };
     }
