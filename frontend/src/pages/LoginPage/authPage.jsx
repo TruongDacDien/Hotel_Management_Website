@@ -23,15 +23,11 @@ import {
   FormMessage,
 } from "../../components/ui/form";
 import { Input } from "../../components/ui/input";
-import { HOTEL_INFO } from "../../lib/constants";
 import { useForm } from "react-hook-form";
-
-const fakeMutation = {
-  mutate: (data) => console.log("Mock submit:", data),
-  isPending: false,
-};
+import { useAuth } from "../../hooks/use-auth";
 
 export default function AuthPage() {
+  const { loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
@@ -40,12 +36,12 @@ export default function AuthPage() {
       <div className="container max-w-7xl grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col justify-center space-y-4">
           <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
-            Welcome to {HOTEL_INFO.name}
+            Chào mừng bạn!
           </h1>
           <p className="text-xl text-muted-foreground max-w-[600px]">
-            Join us to experience luxury accommodation, world-class amenities,
-            and personalized service. Sign in to your account or register to get
-            started.
+            Hãy tham gia cùng chúng tôi để trải nghiệm chỗ ở sang trọng, tiện
+            nghi đẳng cấp thế giới và dịch vụ được cá nhân hóa. Đăng nhập vào
+            tài khoản của bạn hoặc đăng ký để bắt đầu.
           </p>
           <div className="h-64 bg-cover bg-center rounded-lg overflow-hidden mt-6 shadow-lg hidden md:block">
             <img
@@ -69,17 +65,17 @@ export default function AuthPage() {
               className="w-full bg-[#ffffff]"
             >
               <TabsList className="grid w-full grid-cols-2 mb-4 bg-[#f5f5f4]">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger value="login">Đăng nhập</TabsTrigger>
+                <TabsTrigger value="register">Đăng ký</TabsTrigger>
               </TabsList>
               <TabsContent value="login">
                 <LoginForm
-                  loginMutation={fakeMutation}
+                  loginMutation={loginMutation}
                   onForgotPassword={() => setShowForgotPassword(true)}
                 />
               </TabsContent>
               <TabsContent value="register">
-                <RegisterForm registerMutation={fakeMutation} />
+                <RegisterForm registerMutation={registerMutation} />
               </TabsContent>
             </Tabs>
           )}
@@ -98,9 +94,9 @@ function LoginForm({ loginMutation, onForgotPassword }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
+            <CardTitle>Đăng nhập</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              Nhập thông tin đăng nhập của bạn để truy cập tài khoản của bạn
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -122,7 +118,7 @@ function LoginForm({ loginMutation, onForgotPassword }) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Mật khẩu</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••" {...field} />
                   </FormControl>
@@ -131,7 +127,7 @@ function LoginForm({ loginMutation, onForgotPassword }) {
               )}
             />
             <Button type="submit" className="w-full bg-[#262d3e] text-white">
-              Sign In
+              Đăng nhập
             </Button>
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -140,7 +136,7 @@ function LoginForm({ loginMutation, onForgotPassword }) {
               onClick={onForgotPassword}
               className="text-sm text-muted-foreground hover:underline"
             >
-              Forgot your password?
+              Quên mật khẩu?
             </Button>
           </CardFooter>
         </Card>
@@ -158,9 +154,9 @@ function RegisterForm({ registerMutation }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Create an Account</CardTitle>
+            <CardTitle>Tạo tài khoản</CardTitle>
             <CardDescription>
-              Register to book rooms, services, and manage your reservations
+              Đăng ký để đặt phòng, dịch vụ và quản lý đặt phòng của bạn
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -169,9 +165,22 @@ function RegisterForm({ registerMutation }) {
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Họ và tên</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên tài khoản</FormLabel>
+                  <FormControl>
+                    <Input placeholder="irisus" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -195,7 +204,7 @@ function RegisterForm({ registerMutation }) {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone (optional)</FormLabel>
+                  <FormLabel>Só điện thoại (bắt buộc)</FormLabel>
                   <FormControl>
                     <Input placeholder="+1 (555) 123-4567" {...field} />
                   </FormControl>
@@ -208,7 +217,7 @@ function RegisterForm({ registerMutation }) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Mật khẩu</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••" {...field} />
                   </FormControl>
@@ -221,7 +230,7 @@ function RegisterForm({ registerMutation }) {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                  <FormLabel>Xác nhận mật khẩu</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••" {...field} />
                   </FormControl>
@@ -230,7 +239,7 @@ function RegisterForm({ registerMutation }) {
               )}
             />
             <Button type="submit" className="w-full bg-[#262d3e] text-white">
-              Create Account
+              Đăng ký
             </Button>
           </CardContent>
         </Card>
@@ -248,9 +257,9 @@ function ForgotPasswordForm({ onBack, forgotPasswordMutation }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Reset Password</CardTitle>
+            <CardTitle>Đặt lại mật khẩu</CardTitle>
             <CardDescription>
-              Enter your email to receive a password reset link
+              Nhập email để chúng tôi gửi đường dẫn lấy lại mật khẩu
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -268,7 +277,7 @@ function ForgotPasswordForm({ onBack, forgotPasswordMutation }) {
               )}
             />
             <Button type="submit" className="w-full">
-              Send Reset Link
+              Gửi dường dẫn
             </Button>
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -277,7 +286,7 @@ function ForgotPasswordForm({ onBack, forgotPasswordMutation }) {
               onClick={onBack}
               className="text-sm text-muted-foreground"
             >
-              Back to sign in
+              Trở lại đăng nhập
             </Button>
           </CardFooter>
         </Card>

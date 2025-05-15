@@ -4,9 +4,9 @@ import axios from "./axios_custom";
 //   return axios.post("/auth/user/sign-in", { ...data });
 // };
 
-// export const callSignUp = async (data) => {
-//   return axios.post("/auth/user/sign-up", { ...data });
-// };
+export const callSignUp = async (data) => {
+  return axios.post("/customerAccounts", { ...data });
+};
 
 // export const callAccount = async () => {
 //   return axios.get("/auth/user/account");
@@ -62,7 +62,7 @@ export const getServiceTypeById = async (serviceTypeId) => {
 
 //Amentities in Room
 export const getAmentitesRoomDetails = async () => {
-  return await axios.get(`roomAmenityDetails`);
+  return await axios.get(`amenityDetails`);
 };
 
 export const createPayment = async ({

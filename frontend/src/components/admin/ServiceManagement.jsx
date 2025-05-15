@@ -3,13 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "../../lib/queryClient";
+import { useToast } from "../../hooks/use-toast";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../components/ui/table";
 import {
   Form,
   FormControl,
@@ -26,7 +26,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "../../components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -35,24 +35,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "../../components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+} from "../../components/ui/select";
+import { Switch } from "../../components/ui/switch";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from "../../components/ui/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,49 +62,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "../../components/ui/alert-dialog";
 
-// Define the form schema
 const formSchema = z.object({
   name: z.string().min(1, "Service name is required"),
   description: z.string().min(1, "Description is required"),
-  price: z.coerce.number().min(0, "Price must be a positive number"),
+  price: z.coerce.number().min(0, "Price must be positive"),
   duration: z.coerce.number().nullable().optional(),
   imageUrl: z.string().min(1, "Image URL is required"),
   type: z.string().nullable().optional(),
   featured: z.boolean().default(false),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-interface Service {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  duration: number | null;
-  imageUrl: string;
-  type: string | null;
-  featured: boolean;
-}
-
-interface ServiceType {
-  id: number;
-  name: string;
-  description: string;
-}
-
 export default function ServiceManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentService, setCurrentService] = useState<Service | null>(null);
+  const [currentService, setCurrentService] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10; // Number of items per page
+  const pageSize = 10;
 
-  // Set up form for adding a new service
-  const addForm = useForm<FormValues>({
+  const addForm = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -118,8 +96,7 @@ export default function ServiceManagement() {
     },
   });
 
-  // Set up form for editing a service
-  const editForm = useForm<FormValues>({
+  const editForm = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -132,28 +109,25 @@ export default function ServiceManagement() {
     },
   });
 
-  // Fetch all services
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["/api/services"],
     queryFn: async () => {
       const response = await apiRequest("/api/services");
-      return response as Service[];
+      return response;
     },
   });
 
-  // Fetch all service types for the dropdown
   const { data: serviceTypes = [] } = useQuery({
     queryKey: ["/api/service-types"],
     queryFn: async () => {
       const response = await apiRequest("/api/service-types");
-      return response as ServiceType[];
+      return response;
     },
   });
 
-  // Add service mutation
   const addMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      return await apiRequest<Service>("/api/services", {
+    mutationFn: async (values) => {
+      return await apiRequest("/api/services", {
         method: "POST",
         body: JSON.stringify(values),
       });
@@ -162,10 +136,7 @@ export default function ServiceManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
       setIsAddDialogOpen(false);
       addForm.reset();
-      toast({
-        title: "Success",
-        description: "Service added successfully",
-      });
+      toast({ title: "Success", description: "Service added successfully" });
     },
     onError: (error) => {
       toast({
@@ -176,11 +147,10 @@ export default function ServiceManagement() {
     },
   });
 
-  // Edit service mutation
   const editMutation = useMutation({
-    mutationFn: async (values: FormValues & { id: number }) => {
+    mutationFn: async (values) => {
       const { id, ...data } = values;
-      return await apiRequest<Service>(`/api/services/${id}`, {
+      return await apiRequest(`/api/services/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       });
@@ -190,10 +160,7 @@ export default function ServiceManagement() {
       setIsEditDialogOpen(false);
       setCurrentService(null);
       editForm.reset();
-      toast({
-        title: "Success",
-        description: "Service updated successfully",
-      });
+      toast({ title: "Success", description: "Service updated successfully" });
     },
     onError: (error) => {
       toast({
@@ -204,20 +171,13 @@ export default function ServiceManagement() {
     },
   });
 
-  // Delete service mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return await apiRequest(`/api/services/${id}`, {
-        method: "DELETE",
-        body: JSON.stringify({}),
-      });
+    mutationFn: async (id) => {
+      return await apiRequest(`/api/services/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/services"] });
-      toast({
-        title: "Success",
-        description: "Service deleted successfully",
-      });
+      toast({ title: "Success", description: "Service deleted successfully" });
     },
     onError: (error) => {
       toast({
@@ -228,17 +188,14 @@ export default function ServiceManagement() {
     },
   });
 
-  const onAddSubmit = (values: FormValues) => {
-    addMutation.mutate(values);
-  };
-
-  const onEditSubmit = (values: FormValues) => {
+  const onAddSubmit = (values) => addMutation.mutate(values);
+  const onEditSubmit = (values) => {
     if (currentService) {
       editMutation.mutate({ ...values, id: currentService.id });
     }
   };
 
-  const handleEdit = (service: Service) => {
+  const handleEdit = (service) => {
     setCurrentService(service);
     editForm.reset({
       name: service.name,
@@ -252,69 +209,27 @@ export default function ServiceManagement() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    deleteMutation.mutate(id);
-  };
+  const handleDelete = (id) => deleteMutation.mutate(id);
 
-  // Format price to display as currency
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(price);
-  };
 
-  // Format duration to display in hours and minutes
-  const formatDuration = (minutes: number | null) => {
-    if (minutes === null) return 'N/A';
+  const formatDuration = (minutes) => {
+    if (minutes === null) return "N/A";
     if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (mins === 0) return `${hours} hr`;
-    return `${hours} hr ${mins} min`;
+    const hr = Math.floor(minutes / 60);
+    const min = minutes % 60;
+    return min === 0 ? `${hr} hr` : `${hr} hr ${min} min`;
   };
 
-  // Handle pagination
   const totalPages = Math.ceil(services.length / pageSize);
   const paginatedServices = services.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <Pagination className="mt-4">
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            />
-          </PaginationItem>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <PaginationItem key={page}>
-              <PaginationLink
-                onClick={() => setCurrentPage(page)}
-                isActive={currentPage === page}
-              >
-                {page}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
-
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    );
-  };
 
   return (
     <Card>
@@ -329,11 +244,14 @@ export default function ServiceManagement() {
               <DialogHeader>
                 <DialogTitle>Add New Service</DialogTitle>
                 <DialogDescription>
-                  Create a new service offering for your hotel guests.
+                  Create a new service for guests.
                 </DialogDescription>
               </DialogHeader>
               <Form {...addForm}>
-                <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
+                <form
+                  onSubmit={addForm.handleSubmit(onAddSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={addForm.control}
                     name="name"
@@ -341,7 +259,7 @@ export default function ServiceManagement() {
                       <FormItem>
                         <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Spa Treatment, Private Dining, etc." {...field} />
+                          <Input placeholder="Spa, Massage, etc." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -384,14 +302,17 @@ export default function ServiceManagement() {
                         <FormItem>
                           <FormLabel>Duration (minutes)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              step="1" 
-                              {...field} 
-                              value={field.value === null ? '' : field.value}
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              {...field}
+                              value={field.value === null ? "" : field.value}
                               onChange={(e) => {
-                                const value = e.target.value === '' ? null : parseInt(e.target.value);
+                                const value =
+                                  e.target.value === ""
+                                    ? null
+                                    : parseInt(e.target.value);
                                 field.onChange(value);
                               }}
                             />
@@ -442,7 +363,10 @@ export default function ServiceManagement() {
                       <FormItem>
                         <FormLabel>Image URL</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://example.com/image.jpg" {...field} />
+                          <Input
+                            placeholder="https://example.com/image.jpg"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -502,8 +426,10 @@ export default function ServiceManagement() {
                   {paginatedServices.map((service) => (
                     <TableRow key={service.id}>
                       <TableCell>{service.id}</TableCell>
-                      <TableCell className="font-medium">{service.name}</TableCell>
-                      <TableCell>{service.type || 'N/A'}</TableCell>
+                      <TableCell className="font-medium">
+                        {service.name}
+                      </TableCell>
+                      <TableCell>{service.type || "N/A"}</TableCell>
                       <TableCell>{formatPrice(service.price)}</TableCell>
                       <TableCell>{formatDuration(service.duration)}</TableCell>
                       <TableCell>{service.featured ? "Yes" : "No"}</TableCell>
@@ -528,8 +454,8 @@ export default function ServiceManagement() {
                                   Delete Service
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete {service.name}? 
-                                  This action cannot be undone.
+                                  Are you sure you want to delete {service.name}
+                                  ?
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -549,21 +475,54 @@ export default function ServiceManagement() {
                 </TableBody>
               </Table>
             </div>
-            {renderPagination()}
+            {totalPages > 1 && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentPage === 1}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          isActive={currentPage === page}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </>
         )}
 
-        {/* Edit Service Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit Service</DialogTitle>
-              <DialogDescription>
-                Update the details of this service.
-              </DialogDescription>
+              <DialogDescription>Update the service details.</DialogDescription>
             </DialogHeader>
             <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+              <form
+                onSubmit={editForm.handleSubmit(onEditSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={editForm.control}
                   name="name"
@@ -611,14 +570,17 @@ export default function ServiceManagement() {
                       <FormItem>
                         <FormLabel>Duration (minutes)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            step="1" 
-                            {...field} 
-                            value={field.value === null ? '' : field.value}
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            {...field}
+                            value={field.value === null ? "" : field.value}
                             onChange={(e) => {
-                              const value = e.target.value === '' ? null : parseInt(e.target.value);
+                              const value =
+                                e.target.value === ""
+                                  ? null
+                                  : parseInt(e.target.value);
                               field.onChange(value);
                             }}
                           />
@@ -696,6 +658,7 @@ export default function ServiceManagement() {
                     </FormItem>
                   )}
                 />
+
                 <DialogFooter>
                   <Button type="submit" disabled={editMutation.isPending}>
                     {editMutation.isPending ? "Saving..." : "Save Changes"}

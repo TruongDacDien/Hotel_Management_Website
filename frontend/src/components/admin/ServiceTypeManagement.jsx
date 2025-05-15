@@ -1,15 +1,19 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "../../node_modules/@tanstack/react-query";
+import { zodResolver } from "../../node_modules/@hookform/resolvers/zod";
+import { useForm } from "../../node_modules/react-hook-form";
 import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "../../lib/queryClient";
+import { useToast } from "../../hooks/use-toast";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -17,7 +21,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../components/ui/table";
 import {
   Form,
   FormControl,
@@ -26,7 +30,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "../../components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -35,16 +39,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "../../components/ui/dialog";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from "../../components/ui/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +58,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "../../components/ui/alert-dialog";
 
 // Define the form schema
 const formSchema = z.object({
@@ -63,25 +66,16 @@ const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-interface ServiceType {
-  id: number;
-  name: string;
-  description: string;
-}
-
 export default function ServiceTypeManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentServiceType, setCurrentServiceType] = useState<ServiceType | null>(null);
+  const [currentServiceType, setCurrentServiceType] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10; // Number of items per page
+  const pageSize = 10;
 
-  // Set up form for adding a new service type
-  const addForm = useForm<FormValues>({
+  const addForm = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -89,8 +83,7 @@ export default function ServiceTypeManagement() {
     },
   });
 
-  // Set up form for editing a service type
-  const editForm = useForm<FormValues>({
+  const editForm = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -98,19 +91,17 @@ export default function ServiceTypeManagement() {
     },
   });
 
-  // Fetch all service types
   const { data: serviceTypes = [], isLoading } = useQuery({
     queryKey: ["/api/service-types"],
     queryFn: async () => {
       const response = await apiRequest("/api/service-types");
-      return response as ServiceType[];
+      return response;
     },
   });
 
-  // Add service type mutation
   const addMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      return await apiRequest<ServiceType>("/api/service-types", {
+    mutationFn: async (values) => {
+      return await apiRequest("/api/service-types", {
         method: "POST",
         body: JSON.stringify(values),
       });
@@ -133,11 +124,10 @@ export default function ServiceTypeManagement() {
     },
   });
 
-  // Edit service type mutation
   const editMutation = useMutation({
-    mutationFn: async (values: FormValues & { id: number }) => {
+    mutationFn: async (values) => {
       const { id, ...data } = values;
-      return await apiRequest<ServiceType>(`/api/service-types/${id}`, {
+      return await apiRequest(`/api/service-types/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       });
@@ -161,9 +151,8 @@ export default function ServiceTypeManagement() {
     },
   });
 
-  // Delete service type mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id) => {
       return await apiRequest(`/api/service-types/${id}`, {
         method: "DELETE",
         body: JSON.stringify({}),
@@ -185,17 +174,17 @@ export default function ServiceTypeManagement() {
     },
   });
 
-  const onAddSubmit = (values: FormValues) => {
+  const onAddSubmit = (values) => {
     addMutation.mutate(values);
   };
 
-  const onEditSubmit = (values: FormValues) => {
+  const onEditSubmit = (values) => {
     if (currentServiceType) {
       editMutation.mutate({ ...values, id: currentServiceType.id });
     }
   };
 
-  const handleEdit = (serviceType: ServiceType) => {
+  const handleEdit = (serviceType) => {
     setCurrentServiceType(serviceType);
     editForm.reset({
       name: serviceType.name,
@@ -204,11 +193,10 @@ export default function ServiceTypeManagement() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id) => {
     deleteMutation.mutate(id);
   };
 
-  // Handle pagination
   const totalPages = Math.ceil(serviceTypes.length / pageSize);
   const paginatedServiceTypes = serviceTypes.slice(
     (currentPage - 1) * pageSize,
@@ -217,7 +205,6 @@ export default function ServiceTypeManagement() {
 
   const renderPagination = () => {
     if (totalPages <= 1) return null;
-
     return (
       <Pagination className="mt-4">
         <PaginationContent>
@@ -227,7 +214,6 @@ export default function ServiceTypeManagement() {
               disabled={currentPage === 1}
             />
           </PaginationItem>
-
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <PaginationItem key={page}>
               <PaginationLink
@@ -238,10 +224,11 @@ export default function ServiceTypeManagement() {
               </PaginationLink>
             </PaginationItem>
           ))}
-
           <PaginationItem>
             <PaginationNext
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
             />
           </PaginationItem>
@@ -267,7 +254,10 @@ export default function ServiceTypeManagement() {
                 </DialogDescription>
               </DialogHeader>
               <Form {...addForm}>
-                <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
+                <form
+                  onSubmit={addForm.handleSubmit(onAddSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={addForm.control}
                     name="name"
@@ -275,7 +265,10 @@ export default function ServiceTypeManagement() {
                       <FormItem>
                         <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Wellness, Dining, etc." {...field} />
+                          <Input
+                            placeholder="Wellness, Dining, etc."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -353,9 +346,7 @@ export default function ServiceTypeManagement() {
                                   Delete Service Type
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete this service type? 
-                                  This action cannot be undone. Services assigned to 
-                                  this type will need to be reassigned.
+                                  Are you sure? This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -379,17 +370,19 @@ export default function ServiceTypeManagement() {
           </>
         )}
 
-        {/* Edit Service Type Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Service Type</DialogTitle>
               <DialogDescription>
-                Update the details of this service type.
+                Update the service type details.
               </DialogDescription>
             </DialogHeader>
             <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+              <form
+                onSubmit={editForm.handleSubmit(onEditSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={editForm.control}
                   name="name"
