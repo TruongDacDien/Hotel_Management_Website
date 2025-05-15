@@ -5,7 +5,7 @@ import axios from "./axios_custom";
 // };
 
 export const callSignUp = async (data) => {
-  return axios.post("/customerAccounts", { ...data });
+  return axios.post("/auth/customer/sign-up", { ...data });
 };
 
 // export const callAccount = async () => {
