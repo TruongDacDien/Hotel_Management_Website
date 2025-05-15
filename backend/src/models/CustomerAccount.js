@@ -33,17 +33,40 @@ class CustomerAccount {
 
     // Tạo tài khoản khách hàng mới
     static async create(data) {
+        const connection = await this.pool.getConnection(); // Lấy kết nối từ pool
         try {
-            const { username, password, email, avatar, customerId, lastLogin, disabled } = data;
-            const [result] = await this.pool.query(
-                `INSERT INTO TaiKhoanKH (Username, Password, Email, Avatar, MaKH, LastLogin, Disabled)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [username, password, email, avatar, customerId, lastLogin, disabled]
+            // Bắt đầu giao dịch
+            await connection.beginTransaction();
+
+            // 1. Tạo bản ghi trong bảng KhachHang
+            const { fullname, phone } = data;
+            const [customerResult] = await connection.query(
+                `INSERT INTO KhachHang (TenKH, GioiTinh, CCCD, CCCDImage, SDT, DiaChi, QuocTich, IsDeleted)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [fullname, null, null, null, phone, null, "Việt Nam", 0]
             );
-            return { MaTKKH: result.insertId, ...data };
+            const customerId = customerResult.insertId; // Lấy MaKH vừa tạo
+
+            // 2. Tạo bản ghi trong bảng TaiKhoanKH với MaKH vừa tạo
+            const { username, password, email } = data;
+            const [accountResult] = await connection.query(
+                `INSERT INTO TaiKhoanKH (Username, Password, Email, Avatar, MaKH, LastLogin, Disabled)
+                 VALUES (?, ?, ?, ?, ?, NOW(), 0)`,
+                [username, password, email, null, customerId]
+            );
+
+            // Commit giao dịch
+            await connection.commit();
+
+            return { MaTKKH: accountResult.insertId, MaKH: customerId, ...data };
         } catch (error) {
+            // Rollback giao dịch nếu có lỗi
+            await connection.rollback();
             console.error("Error creating customer account:", error);
             throw new Error("Error creating customer account");
+        } finally {
+            // Giải phóng kết nối
+            connection.release();
         }
     }
 
