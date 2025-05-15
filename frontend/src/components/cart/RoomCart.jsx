@@ -44,7 +44,7 @@ export default function RoomCard({ room }) {
         <h3 className="font-bold text-xl text-primary mb-2">
           {room.TenLoaiPhong}
         </h3>
-        <p className="text-neutral-700 mb-4 truncate">{room.MoTa}</p>
+        <p className="text-neutral-700 mb-4 line-clamp-2">{room.MoTa}</p>
         <div className="flex flex-wrap gap-2 mb-6">
           {roomAmenities.slice(0, 3).map((amenity, index) => (
             <Badge

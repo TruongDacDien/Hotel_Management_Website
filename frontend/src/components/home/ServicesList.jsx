@@ -75,7 +75,7 @@ function ServiceCard({ service }) {
       />
       <CardContent className="p-6">
         <h3 className="font-bold text-xl text-primary mb-2">{service.TenDV}</h3>
-        <p className="text-neutral-700 mb-4">{service.MoTa}</p>
+        <p className="text-neutral-700 mb-4 line-clamp-2">{service.MoTa}</p>
         <Link
           to={`/services/${service.MaDV}/book`}
           className="hover:underline inline-flex items-center text-primary hover:text-primary-dark transition-colors duration-300 font-medium"

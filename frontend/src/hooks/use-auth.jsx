@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
 import { useToast } from "../hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { callSignUp } from "../config/api";
 
 export const AuthContext = createContext(null);
 
@@ -37,22 +38,20 @@ export function AuthProvider({ children }) {
 
   const registerMutation = useMutation({
     mutationFn: async (userData) => {
-      console.warn("Mocking register request", userData);
-      return { id: 2, name: userData.name, email: userData.email };
+      const res = await callSignUp(userData);
+      if (!res.success) throw new Error(res.message || "Đăng ký thất bại");
+      return res.data;
     },
     onSuccess: (userData) => {
       setUser(userData);
-      queryClient.setQueryData(["/api/user"], userData);
-      toast({
-        title: "Account created!",
-        description: "Your account has been created successfully.",
-      });
+      // queryClient.setQueryData(["/api/user"], userData);
+      toast({ title: "Đăng ký thành công" });
       window.location.href = "/"; // Sửa lỗi
     },
     onError: () => {
       toast({
-        title: "Registration failed",
-        description: "An error occurred while creating your account.",
+        title: "Thất bại",
+        description: "Không thể tạo tài khoản",
         variant: "destructive",
       });
     },
