@@ -29,12 +29,12 @@ export class Customer_AuthService {
     return await CustomerAccount.create(userdata);
   };
 
-  static signIn = async ({ identifier, userPass }) => {
+  static signIn = async ({ identifier, password }) => {
     const user = await customerAccountService.findCustomerByIdentifier(identifier);
     if (!user) {
       throw customError("User not found", 400);
     }
-    const isMatch = Customer_AuthService.checkPassword(userPass, user.Password);
+    const isMatch = Customer_AuthService.checkPassword(password, user.Password);
     if (!isMatch) {
       throw customError("Password is incorrect", 400);
     }

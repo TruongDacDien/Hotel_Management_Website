@@ -50,7 +50,7 @@ class CustomerAccount {
 
             // 2. Tạo bản ghi trong bảng TaiKhoanKH với MaKH vừa tạo
             const { username, password, email } = data;
-            const hashPassword = bcrypt.hashSync(password);
+            const hashPassword = bcrypt.hashSync(password, 10);
             const [accountResult] = await connection.query(
                 `INSERT INTO TaiKhoanKH (Username, Password, Email, Avatar, MaKH, LastLogin, Disabled)
                  VALUES (?, ?, ?, ?, ?, NOW(), 0)`,
