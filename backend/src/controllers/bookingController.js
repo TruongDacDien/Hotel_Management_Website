@@ -29,6 +29,11 @@ class BookingController {
         await BookingService.delete(bookingId);
         res.status(204).end();
     });
+
+    customerOrder = expressAsyncHandler(async (req, res) => {
+        const newBooking = await BookingService.customerOrder(req.body);
+        res.status(201).json(newBooking);
+    });
 }
 
 export default new BookingController();

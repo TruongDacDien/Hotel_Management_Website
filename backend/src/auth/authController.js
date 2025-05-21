@@ -19,7 +19,7 @@ class Customer_AuthController {
     });
 
     return res.status(200).json({
-      msg: "User created successfully!",
+      msg: "User login successfully!",
       success: true,
       data: response,
     });
@@ -76,7 +76,7 @@ class Employee_AuthController {
     });
 
     return res.status(200).json({
-      msg: "User created successfully!",
+      msg: "User login successfully!",
       success: true,
       data: response,
     });

@@ -1,5 +1,6 @@
 import databaseInstance from "../config/database.js";
 import bcrypt from "bcrypt";
+import { handleDestroyCloudinary } from "../utils/cloudinary.js";
 
 class CustomerAccount {
     static pool = databaseInstance.getPool();
@@ -52,9 +53,9 @@ class CustomerAccount {
             const { username, password, email } = data;
             const hashPassword = bcrypt.hashSync(password, 10);
             const [accountResult] = await connection.query(
-                `INSERT INTO TaiKhoanKH (Username, Password, Email, Avatar, MaKH, LastLogin, Disabled)
+                `INSERT INTO TaiKhoanKH (Username, Password, Email, AvatarId, AvatarURL, MaKH, LastLogin, Disabled)
                  VALUES (?, ?, ?, ?, ?, NOW(), 0)`,
-                [username, hashPassword, email, null, customerId]
+                [username, hashPassword, email, "user_default_m4o3wc", "https://res.cloudinary.com/dzaoyffio/image/upload/v1747814352/user_default_m4o3wc.png", customerId]
             );
 
             // Commit giao dịch
@@ -75,16 +76,18 @@ class CustomerAccount {
     // Cập nhật tài khoản khách hàng
     static async update(accountId, data) {
         try {
-            const { username, password, email, avatar, lastLogin, disabled } = data;
+            const { username, password, email, avatarId, avatarURL } = data;
+            const hashPassword = bcrypt.hashSync(password, 10);
             const [result] = await this.pool.query(
                 `UPDATE TaiKhoanKH
-                 SET Username = ?, Password = ?, Email = ?, Avatar = ?, LastLogin = ?, Disabled = ?
+                 SET Username = ?, Password = ?, Email = ?, AvatarId = ?, AvatarURL = ?
                  WHERE MaTKKH = ?`,
-                [username, password, email, avatar, lastLogin, disabled, accountId]
+                [username, hashPassword, email, avatarId, avatarURL, accountId]
             );
             if (result.affectedRows === 0) {
-                throw new Error("Account not found or not updated");
+                throw new Error("Account not found or not updated"); w
             }
+            handleDestroyCloudinary(oldFilm.public_ID);
             return { accountId, ...data };
         } catch (error) {
             console.error(`Error updating account (ID: ${accountId}):`, error);

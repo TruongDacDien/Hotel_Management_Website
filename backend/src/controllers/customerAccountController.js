@@ -1,5 +1,6 @@
 import expressAsyncHandler from "express-async-handler";
 import CustomerAccountService from "../services/customerAccountService.js";
+import { handleUploadCloudinary } from "../utils/cloudinary.js";
 
 class CustomerAccountController {
     getAll = expressAsyncHandler(async (req, res) => {
@@ -20,6 +21,13 @@ class CustomerAccountController {
 
     update = expressAsyncHandler(async (req, res) => {
         const { accountId } = req.params;
+        if (req.file) {
+            const b64 = Buffer.from(req.file.buffer).toString("base64");
+            let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+            const cldRes = await handleUploadCloudinary(dataURI);
+            req.body.avatarURL = cldRes.url;
+            req.body.avatarId = cldRes.public_id;
+        }
         const updated = await CustomerAccountService.update(accountId, req.body);
         res.json(updated);
     });

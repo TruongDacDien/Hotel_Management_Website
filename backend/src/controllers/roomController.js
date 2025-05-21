@@ -29,6 +29,18 @@ class RoomController {
         await RoomService.delete(roomId);
         res.status(204).end();
     });
+
+    getDataRoomByDay = expressAsyncHandler(async (req, res) => {
+        const { dateSelected } = req.query;
+        const data = await RoomService.getDataRoomByDay(dateSelected);
+        res.json(data);
+    });
+
+    getEmptyRoom = expressAsyncHandler(async (req, res) => {
+        const { startDay, endDay } = req.query;
+        const data = await RoomService.getEmptyRoom(startDay, endDay);
+        res.json(data);
+    });
 }
 
 export default new RoomController();

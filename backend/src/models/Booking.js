@@ -48,6 +48,35 @@ class Booking {
         }
     }
 
+    static async customerOrder(customerId, selectedRoom, numberOfCustomers, bookingData) {
+        const connection = await this.pool.getConnection(); // Lấy kết nối từ pool
+        try {
+            await connection.beginTransaction(); // Bắt đầu giao dịch
+            const [bookingResult] = await connection.query(
+                "INSERT INTO PhieuThue (MaKH, NgayLapPhieu, MaNV, IsDeleted) VALUES (?, NOW(), 1, 0)",
+                [customerId]
+            );
+            const bookingId = bookingResult.insertId;
+
+            const { startDay, endDay } = bookingData;
+            const [bookingDetailResult] = await connection.query(
+                `INSERT INTO CT_PhieuThue (MaPhieuThue, SoPhong, NgayBD, NgayKT, ThoiDiemCheckIn, NoiDungCheckIn,ThoiDiemCheckOut,NoiDungCheckOut, SoNguoiO, TinhTrangThue, TienPhong)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [bookingId, selectedRoom, startDay, endDay, null, null, null, null, numberOfCustomers, "Phòng đã đặt", 0]
+            )
+
+            await connection.commit(); // Commit giao dịch
+
+            return { MaCTPT: bookingDetailResult.insertId, MaPhieuThue: bookingId, ...bookingData };
+        } catch (error) {
+            await connection.rollback(); // Rollback giao dịch nếu có lỗi
+            console.error("Error creating booking:", error);
+            throw new Error("Error creating booking");
+        } finally {
+            connection.release(); // Giải phóng kết nối
+        }
+    }
+
     // Update booking
     static async update(bookingId, data) {
         try {

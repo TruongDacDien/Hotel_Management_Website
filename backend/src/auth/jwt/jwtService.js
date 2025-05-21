@@ -4,14 +4,14 @@ import { customError } from "../../middlewares/errorHandlers.js";
 export default class JwtService {
     static createJWT = (payload) => {
         try {
-            let accesssToken = jwt.sign(payload, process.env.JWT_AT_SECRET, {
+            let accessToken = jwt.sign(payload, process.env.JWT_AT_SECRET, {
                 expiresIn: process.env.JWT_AT_EXPIRESIN,
             });
             let refreshToken = jwt.sign(payload, process.env.JWT_RT_SECRET, {
                 expiresIn: process.env.JWT_RT_EXPIRESIN,
             });
             return {
-                accesssToken,
+                accessToken,
                 refreshToken
             };
         } catch (e) { }
