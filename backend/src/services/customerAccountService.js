@@ -12,8 +12,8 @@ class CustomerAccountService {
     }
 
     static async create(data) {
-        if (!data.username) {
-            throw new Error('Missing username');
+        if (!data.username || !!data.fullname || !data.phone || !data.email || !data.password) {
+            throw new Error('Missing required fields');
         }
         return await CustomerAccount.create(data);
     }

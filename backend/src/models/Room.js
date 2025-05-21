@@ -83,6 +83,131 @@ class Room {
             throw new Error("Error deleting room");
         }
     }
+
+    static async getDataRoomByDay(dateSelected) {
+        try {
+            const query = `
+                SELECT ct.MaCTPT,
+                       COALESCE(kh.TenKH, '') AS TenKH,
+                       p.SoPhong AS MaPhong,
+                       p.DonDep AS DonDep,
+                       COALESCE(ct.TinhTrangThue, 'Phòng trống') AS TinhTrang,
+                       lp.TenLoaiPhong AS LoaiPhong,
+                       ct.NgayBD AS NgayDen,
+                       CASE 
+                           WHEN ct.NgayBD IS NULL OR ct.NgayKT IS NULL THEN 0
+                           ELSE CEIL(TIMESTAMPDIFF(MINUTE, ct.NgayBD, ct.NgayKT) / 1440.0)
+                       END AS SoNgayO,
+                       CASE 
+                           WHEN ct.NgayBD IS NULL OR ct.NgayKT IS NULL THEN 0
+                           ELSE TIMESTAMPDIFF(MINUTE, ct.NgayBD, ct.NgayKT) / 60
+                       END AS SoGio,
+                       ct.NgayKT AS NgayDi,
+                       COALESCE(ct.SoNguoiO, 0) AS SoNguoi
+                FROM Phong p
+                LEFT JOIN CT_PhieuThue ct 
+                    ON p.SoPhong = ct.SoPhong 
+                    AND ((? BETWEEN ct.NgayBD AND ct.NgayKT)
+                        OR (ct.NgayBD > ?) 
+                        OR ct.NgayBD IS NULL)
+                    AND ct.TinhTrangThue <> 'Đã thanh toán'
+                LEFT JOIN PhieuThue pt ON ct.MaPhieuThue = pt.MaPhieuThue
+                LEFT JOIN KhachHang kh ON pt.MaKH = kh.MaKH
+                LEFT JOIN LoaiPhong lp ON p.MaLoaiPhong = lp.MaLoaiPhong
+                WHERE p.IsDeleted = 0
+            `;
+
+            const [rows] = await this.pool.query(query, [ngayChon, ngayChon]);
+
+            // Map rows to match the Phong_Custom structure
+            const result = rows.map(row => ({
+                MaCTPT: row.MaCTPT || 0,
+                TenKH: row.TenKH,
+                MaPhong: row.MaPhong,
+                DonDep: row.DonDep,
+                TinhTrang: row.TinhTrang,
+                LoaiPhong: row.LoaiPhong,
+                NgayDen: row.NgayDen ? new Date(row.NgayDen) : null,
+                SoNgayO: parseInt(row.SoNgayO, 10),
+                SoGio: parseInt(row.SoGio, 10),
+                NgayDi: row.NgayDi ? new Date(row.NgayDi) : null,
+                SoNguoi: parseInt(row.SoNguoi, 10)
+            }));
+
+            return result;
+        } catch (error) {
+            console.error("Error fetching room data:", error);
+            throw new Error("Error fetching room data");
+        }
+    }
+
+    static async getEmptyRoom(ngayBD, ngayKT) {
+        try {
+            const query = `
+            SELECT p.SoPhong, lp.TenLoaiPhong, lp.MaLoaiPhong
+            FROM Phong p
+            JOIN LoaiPhong lp ON p.MaLoaiPhong = lp.MaLoaiPhong
+            WHERE p.IsDeleted = 0 
+            AND p.DonDep NOT IN ('Sửa chữa', 'Chưa dọn dẹp')
+            AND p.SoPhong NOT IN (
+                SELECT ct.SoPhong
+                FROM CT_PhieuThue ct
+                WHERE ((ct.NgayBD <= ? AND ct.NgayKT >= ?)) 
+                AND ct.TinhTrangThue != 'Đã thanh toán'
+            )
+        `;
+
+            // Thực hiện truy vấn với các tham số ngayBD và ngayKT
+            const [rows] = await this.pool.query(query, [ngayKT, ngayBD]);
+
+            // Map kết quả trả về theo cấu trúc PhongTrong
+            const result = rows.map(row => ({
+                SoPhong: row.SoPhong,
+                MaLoaiPhong: row.MaLoaiPhong,
+                TenLoaiPhong: row.TenLoaiPhong
+            }));
+
+            return result;
+        } catch (error) {
+            console.error("Error fetching available rooms:", error);
+            throw new Error("Error fetching available rooms");
+        }
+    }
+
+    static async getEmptyRoomByType(startDay, endDay, roomTypeId) {
+        try {
+            const query = `
+            SELECT p.SoPhong, lp.TenLoaiPhong, lp.MaLoaiPhong, lp.SoNguoiToiDa
+            FROM Phong p
+            JOIN LoaiPhong lp ON p.MaLoaiPhong = lp.MaLoaiPhong
+            WHERE p.IsDeleted = 0
+            AND p.DonDep NOT IN ('Sửa chữa', 'Chưa dọn dẹp')
+            AND p.SoPhong NOT IN (
+                SELECT ct.SoPhong
+                FROM CT_PhieuThue ct
+                WHERE ((ct.NgayBD <= ? AND ct.NgayKT >= ?)) 
+                AND ct.TinhTrangThue != 'Đã thanh toán'
+            )
+            AND lp.MaLoaiPhong = ?
+        `;
+
+            // Thực hiện truy vấn với các tham số ngayBD và ngayKT
+            const [rows] = await this.pool.query(query, [startDay, endDay, roomTypeId]);
+
+            // Map kết quả trả về theo cấu trúc PhongTrong
+            const result = rows.map(row => ({
+                SoPhong: row.SoPhong,
+                MaLoaiPhong: row.MaLoaiPhong,
+                TenLoaiPhong: row.TenLoaiPhong,
+                SoNguoiToiDa: row.SoNguoiToiDa
+            }));
+
+            return result;
+        } catch (error) {
+            console.error("Error fetching available rooms:", error);
+            throw new Error("Error fetching available rooms");
+        }
+    }
 }
 
 export default Room;
