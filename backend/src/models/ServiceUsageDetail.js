@@ -1,4 +1,5 @@
 import databaseInstance from "../config/database.js";
+import Service from "./Service.js";
 
 class ServiceUsageDetail {
   static pool = databaseInstance.getPool();
@@ -34,12 +35,12 @@ class ServiceUsageDetail {
   // Tạo chi tiết sử dụng dịch vụ mới
   static async create(data) {
     try {
-      const { bookingId, serviceId, quantity } = data;
+      const { customerId, serviceId, quantity, offeredDate, totalMoney } = data;
       const [result] = await this.pool.query(
-        "INSERT INTO CT_SDDichVu (MaPhieu, MaDV, SoLuong) VALUES (?, ?, ?)",
-        [bookingId, serviceId, quantity]
+        "INSERT INTO CT_SDDichVu (MaCTPT, MaKH, MaDV, SL, ThanhTien, NgayApDung) VALUES (?, ?, ?, ?, ?, ?)",
+        [null, customerId, serviceId, quantity, totalMoney, offeredDate]
       );
-      return { MaPhieu: bookingId, MaDV: serviceId, ...data };
+      return { MaCTSDDV: result.insertId, ...data };
     } catch (error) {
       console.error("Error creating service usage detail:", error);
       throw new Error("Error creating service usage detail");

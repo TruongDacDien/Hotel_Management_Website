@@ -43,6 +43,14 @@ class CustomerAccountService {
     static async findCustomerByIdentifier(identifier) {
         return await CustomerAccount.findCustomerByIdentifier(identifier);
     }
+
+    static async findByIdAndUpdatePassword(id, hashedPassword) {
+        return await CustomerAccount.findByIdAndUpdatePassword(id, hashedPassword);
+    }
+
+    static async findByEmailAndUpdateVerificationCode(email, verification, expirationTime){
+        return await CustomerAccount.findByEmailAndUpdateVerificationCode(email, verification, expirationTime)
+    }
 }
 
 export default CustomerAccountService;

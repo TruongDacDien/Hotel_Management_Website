@@ -114,6 +114,22 @@ class Service {
       throw new Error("Error restoring service");
     }
   }
+
+  static async findByIdAndUpdateQuantity(id, quantity){
+    try {
+      const [result] = await this.pool.query(
+        "UPDATE DichVu SET SoLuong = ? WHERE MaDV = ?",
+        [quantity, id]
+      );
+      if (result.affectedRows === 0) {
+        throw new Error("Service not found or can not update");
+      }
+      return true;
+    } catch (error) {
+      console.error(`Error find or update service quantity (ID: ${id}):`, error);
+      throw new Error("Error find or update service quantity");
+    }
+  }
 }
 
 export default Service;

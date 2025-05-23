@@ -85,7 +85,7 @@ class CustomerAccount {
                 [username, hashPassword, email, avatarId, avatarURL, accountId]
             );
             if (result.affectedRows === 0) {
-                throw new Error("Account not found or not updated"); w
+                throw new Error("Account not found or not updated"); 
             }
             handleDestroyCloudinary(oldFilm.public_ID);
             return { accountId, ...data };
@@ -196,6 +196,46 @@ class CustomerAccount {
         try {
             const account = await this.findUserByEmail(email);
             return await this.update(account.MaTKKH, updateData);
+        } catch (error) {
+            console.error(
+                `Error finding and updating account by email (Email: ${email}):`,
+                error
+            );
+            throw new Error("Error updating account by email");
+        }
+    } 
+
+    static async findByIdAndUpdatePassword(accountId, hashPassword) {
+        try {
+            const [result] = await this.pool.query(
+                `UPDATE TaiKhoanKH
+                 SET Password = ?
+                 WHERE MaTKKH = ?`,
+                [hashPassword, accountId]
+            );
+            if (result.affectedRows === 0) {
+                throw new Error("Account not found or can not updated"); w
+            }
+        } catch (error) {
+            console.error(
+                `Error finding and updating account by ID (ID: ${accountId}):`,
+                error
+            );
+            throw new Error("Error updating account by ID");
+        }
+    }
+
+    static async findByEmailAndUpdateVerificationCode(email, verification, expirationTime){
+        try {
+            const [result] = await this.pool.query(
+                `UPDATE TaiKhoanKH
+                 SET MaXacNhan = ?, ThoiGianHetHan= ?
+                 WHERE Email = ?`,
+                [verification, expirationTime, email]
+            );
+            if (result.affectedRows === 0) {
+                throw new Error("Account not found or can not updated"); w
+            }
         } catch (error) {
             console.error(
                 `Error finding and updating account by email (Email: ${email}):`,

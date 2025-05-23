@@ -58,6 +58,10 @@ class ServiceService {
         }
         return await Service.restore(id);
     }
+
+    static async findByIdAndUpdateQuantity(id, quantity) {
+        return await Service.findByIdAndUpdateQuantity(id, quantity);
+    }
 }
 
 export default ServiceService;
