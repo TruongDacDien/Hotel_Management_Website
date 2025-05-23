@@ -1,4 +1,5 @@
 import databaseInstance from "../config/database.js";
+import RoomType from "./RoomType.js";
 
 class Booking {
     static pool = databaseInstance.getPool();
@@ -58,11 +59,16 @@ class Booking {
             );
             const bookingId = bookingResult.insertId;
 
-            const { startDay, endDay } = bookingData;
+            const { startDay, endDay, roomTypeId } = bookingData;
+            let roomType = await RoomType.getById(roomTypeId);
+            let start = new Date(startDay);
+            let end = new Date(endDay);
+            let diffInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            let totalMoney = roomType.GiaNgay * diffInDays;
             const [bookingDetailResult] = await connection.query(
                 `INSERT INTO CT_PhieuThue (MaPhieuThue, SoPhong, NgayBD, NgayKT, ThoiDiemCheckIn, NoiDungCheckIn,ThoiDiemCheckOut,NoiDungCheckOut, SoNguoiO, TinhTrangThue, TienPhong)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [bookingId, selectedRoom, startDay, endDay, null, null, null, null, numberOfCustomers, "Phòng đã đặt", 0]
+                [bookingId, selectedRoom, startDay, endDay, null, null, null, null, numberOfCustomers, "Phòng đã đặt", totalMoney]
             )
 
             await connection.commit(); // Commit giao dịch

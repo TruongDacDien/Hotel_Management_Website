@@ -1,17 +1,14 @@
 import expressAsyncHandler from "express-async-handler";
-import CustomerService from "../services/customerService.js";
 import EmailService from "../services/emailService.js"
-import CustomerAccount from "../models/CustomerAccount.js";
+import CustomerAccountService from "../services/customerAccountService.js";
 import bcrypt from "bcrypt";
 
 class EmailController {
 
   sendConfirmCode = expressAsyncHandler(async (req, res, next) => {
-    const {
-      userEmail
-    } = req.body;
+    const { email } = req.body;
 
-    const user = await CustomerService.findUserByEmail(userEmail);
+    const user = await CustomerAccountService.findUserByEmail(email);
     if (!user) {
       return res.status(404).json({
         msg: "User not found",
@@ -32,11 +29,11 @@ class EmailController {
 
     const verificationCode = randomVerificationCode();
     await EmailService.sendEmail(
-      userEmail,
+      email,
       "Verification Code",
       `Your verification code is: ${verificationCode}`
     );
-    await EmailService.storeConfirmCode(userEmail, verificationCode);
+    await EmailService.storeConfirmCode(email, verificationCode);
 
     return res.status(200).json({
       msg: "Verification code sent successfully!",
@@ -45,12 +42,10 @@ class EmailController {
   });
 
   sendResetPassword = expressAsyncHandler(async (req, res, next) => {
-    const {
-      userEmail
-    } = req.body;
+    const { email } = req.body;
 
     // Tìm user theo email
-    const user = await CustomerService.findUserByEmail(userEmail);
+    const user = await CustomerAccountService.findUserByEmail(email);
     if (!user) {
       return res.status(404).json({
         msg: "User not found",
@@ -73,19 +68,12 @@ class EmailController {
 
     const newPassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     // Cập nhật mật khẩu mới
-    const update = await CustomerAccount.findOneAndUpdate({
-      _id: user.id
-    }, {
-      password: hashedPassword
-    }, {
-      new: true
-    });
+    const update = await CustomerAccountService.findByIdAndUpdatePassword(user.MaTKKH, hashedPassword);
 
     // Gửi email reset password
     await EmailService.sendEmail(
-      userEmail,
+      email,
       "Reset Password",
       `Your new password is: ${newPassword}`
     );
@@ -96,15 +84,10 @@ class EmailController {
     });
   });
 
-
-
   checkConfirmCode = expressAsyncHandler(async (req, res, next) => {
-    const {
-      userEmail,
-      userVerificationCode
-    } = req.body;
+    const { email, verificationCode } = req.body;
 
-    const user = await CustomerService.findUserByEmail(userEmail);
+    const user = await CustomerAccountService.findUserByEmail(email);
     if (!user) {
       return res.status(404).json({
         msg: "User not found!",
@@ -113,8 +96,8 @@ class EmailController {
     }
 
     if (
-      user.userVerificationCode !== userVerificationCode ||
-      user.userVFCodeExpirationTime < new Date()
+      user.MaXacNhan !== verificationCode ||
+      user.ThoiGianHetHan < new Date()
     ) {
       return res.status(404).json({
         msg: "Invalid verification code!",
@@ -131,47 +114,40 @@ class EmailController {
     });
   });
 
-  testSendMailWithTemplate = expressAsyncHandler(async (req, res, next) => {
-    const ticket = {
-      verifyCode: "145910772",
-      filmName: "BONG DUNG TRUNG SO C13",
-      time: "10:10",
-      date: "06-10-2022",
-      roomName: "SỐ 01",
-      seatNames: ["A1", "A2", "A3"],
-      tickets: [{
-          name: "ĐƠn",
-          quantity: 2,
-          price: 50000,
-        },
-        {
-          name: "Đôi",
-          quantity: 1,
-          price: 30000,
-        },
-      ],
-      items: [{
-          name: "Popcorn",
-          quantity: 2,
-          price: 50000,
-        },
-        {
-          name: "Coke",
-          quantity: 1,
-          price: 30000,
-        },
-      ],
-      totalMoney: 130000,
+  sendBookingConfirmation = expressAsyncHandler(async (req, res, next) => {
+    const bookingData = {
+      fullName: req.body.fullName,
+      email: req.body.email,
+      phone: req.body.phone,
+      roomRequests: req.body.roomRequests || [],
+      serviceRequests: req.body.serviceRequests || [],
     };
 
-    await EmailService.sendEmailWithHTMLTemplate(
-      "hoangphonghp04@gmail.com",
-      "Vé phim",
-      ticket
+    if (!bookingData.fullName || !bookingData.email || !bookingData.phone || !bookingData.roomRequests.length) {
+      return res.status(400).json({ error: "Missing required fields or room requests" });
+    }
+
+    // Gọi BookingService.customerOrder để xử lý đặt phòng và dịch vụ
+    const result = await BookingService.customerOrder(bookingData);
+
+    // Gửi email xác nhận
+    const emailSent = await EmailService.sendEmailWithHTMLTemplate(
+      bookingData.email,
+      "Xác nhận đặt phòng và dịch vụ - The Royal Hotel",
+      { ...bookingData, ...result } // Kết hợp bookingData với result để có roomResults và serviceResults
     );
-    return res.status(200).json({
-      msg: "Confirmed successfully!",
-      success: true,
+
+    if (!emailSent) {
+      return res.status(500).json({
+        msg: "Failed to send confirmation email",
+        success: false,
+      });
+    }
+
+    return res.status(result.success ? 201 : 400).json({
+      msg: "Booking processed and confirmation email sent successfully!",
+      success: result.success,
+      data: result,
     });
   });
 }

@@ -22,6 +22,8 @@ import serviceUsageDetailRoutes from './routes/serviceUsageDetailRoutes.js';
 import authRoutes from './auth/authRoutes.js';
 import emailRoutes from './routes/emailRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import ratingRoomTypeRoutes from './routes/ratingRoomTypeRoutes.js';
+import ratingServiceRoutes from './routes/ratingServiceRoutes.js';
 
 const router = express.Router();
 
@@ -49,6 +51,8 @@ router.use('/api/serviceUsageDetails', serviceUsageDetailRoutes);
 router.use('/api/auth', authRoutes);
 router.use('/api/email', emailRoutes);
 router.use('/api/payment', paymentRoutes);
+router.use('/api/ratingRoomTypes', ratingRoomTypeRoutes);
+router.use('/api/ratingServices', ratingServiceRoutes);
 
 router.use((req, res) => {
   res.status(404).json({

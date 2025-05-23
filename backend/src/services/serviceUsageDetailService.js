@@ -12,7 +12,7 @@ class ServiceUsageDetailService {
   }
 
   static async create(data) {
-    if (!data.bookingId || !data.serviceId || data.quantity == null) {
+    if (!data.customerId || !data.serviceId || data.quantity == null || !data.offeredDate || !data.totalMoney) {
       throw new Error('Missing required fields');
     }
     return await ServiceUsageDetail.create(data);

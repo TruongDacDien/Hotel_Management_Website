@@ -31,8 +31,20 @@ class BookingController {
     });
 
     customerOrder = expressAsyncHandler(async (req, res) => {
-        const newBooking = await BookingService.customerOrder(req.body);
-        res.status(201).json(newBooking);
+        const bookingData = {
+            fullName: req.body.fullName,
+            email: req.body.email,
+            phone: req.body.phone,
+            roomRequests: req.body.roomRequests || [], // Mảng yêu cầu: [{ roomTypeId, numberOfRooms, startDay, endDay }, ...]
+            serviceRequests: req.body.serviceRequests || [] // Mảng yêu cầu: [{ serviceId, quantity, offeredDate }, ...]
+        };
+
+        if (!bookingData.fullName || !bookingData.email || !bookingData.phone || !bookingData.roomRequests.length ) {
+            return res.status(400).json({ error: "Missing required fields or room requests" });
+        }
+
+        const result = await BookingService.customerOrder(bookingData);
+        res.status(result.success ? 201 : 400).json(result);
     });
 }
 

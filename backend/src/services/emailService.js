@@ -1,5 +1,8 @@
 import CustomerService from "./customerService.js";
 import transporter from "../config/email.js";
+import CustomerAccountService from "./customerAccountService.js";
+import RoomTypeService from "./roomTypeService.js";
+import ServiceService from "./serviceService.js";
 
 class EmailService {
   static sendEmail = async (to, subject, text) => {
@@ -18,169 +21,148 @@ class EmailService {
     }
   };
 
-  static storeConfirmCode = async (customerEmail, verification) => {
+  static storeConfirmCode = async (email, verification) => {
     const expirationTime = new Date(Date.now() + 3 * 60 * 1000); // 3 phút từ thời điểm gửi mã
-    return await userModel.findOneAndUpdate({
-      customerEmail,
-    }, {
-      userVerificationCode: verification,
-      userVFCodeExpirationTime: expirationTime,
-    }, {
-      new: true,
-    });
+    return await CustomerAccountService.findByEmailAndUpdateVerificationCode(email, verification, expirationTime);
   };
 
-  static sendEmailWithHTMLTemplate = async (to, subject, ticket) => {
+  static sendEmailWithHTMLTemplate = async (to, subject, bookingData) => {
     try {
+      // Lấy thông tin loại phòng và dịch vụ để hiển thị tên
+      const roomTypePromises = bookingData.roomResults.map(async (result) => {
+        if (result.roomTypeId) {
+          const roomType = await RoomTypeService.getById(result.roomTypeId);
+          return { ...result, TenLoaiPhong: roomType?.TenLoaiPhong || "Unknown" };
+        }
+        return result;
+      });
+
+      const servicePromises = bookingData.serviceResults.map(async (result) => {
+        if (result.serviceId) {
+          const service = await ServiceService.getById(result.serviceId);
+          return { ...result, TenDV: service?.TenDV || "Unknown", Gia: service?.Gia || 0 };
+        }
+        return result;
+      });
+
+      const enrichedRoomResults = await Promise.all(roomTypePromises);
+      const enrichedServiceResults = await Promise.all(servicePromises);
+
+      // Tính tổng tiền
+      const totalRoomMoney = enrichedRoomResults.reduce((sum, result) => {
+        return (
+          sum +
+          result.bookings.reduce((roomSum, booking) => {
+            return roomSum + (booking.TienPhong || 0);
+          }, 0)
+        );
+      }, 0);
+
+      const totalServiceMoney = enrichedServiceResults.reduce((sum, result) => {
+        return sum + (result.totalMoney || 0);
+      }, 0);
+
+      const totalMoney = totalRoomMoney + totalServiceMoney;
+
+      // Tạo template HTML
       const htmlTemplate = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Cinestar Cinemas</title>
+          <title>The Royal Hotel</title>
           <style>
-            table {
-              border-collapse: collapse;
-              width: 100%;
-            }
-            th, td {
-              padding: 8px;
-              text-align: left;
-              border: 1px solid black;
-            }
-            .tableSeat th {
-              background-color: #6b3fa4;
-              color: white;
-            }
-            .purple-text {
-              color: #6b3fa4;
-            }
+            body { font-family: Arial, sans-serif; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+            th { background-color: #6b3fa4; color: white; }
+            .purple-text { color: #6b3fa4; }
+            h1, h2 { color: #333; }
+            .failed { color: red; }
           </style>
         </head>
         <body>
           <div>
-            <h1>CINESTAR CINEMAS</h1>
-            <p>CineStar Bình Dương</p>
-            <p>
-              Nhà văn hóa sinh viên, Đại học Quốc gia HCM, P.Đông Hòa, Dĩ An, Bình Dương
-            </p>
+            <h1>THE ROYAL HOTEL</h1>
+            <p>The Royal Hotel Hồ Chí Minh</p>
+            <p>11 Đ. Sư Vạn Hạnh, Phường 12, Quận 10, Hồ Chí Minh</p>
           </div>
-      
-          <h1 class="purple-text">XÁC NHẬN ĐẶT VÉ THÀNH CÔNG</h1>
-      
-          <h2 style="color: black">MÃ ĐẶT VÉ: ${ticket.verifyCode}</h2>
-      
-          <table class="information">
-            <tr>
-              <th>PHIM</th>
-              <td>${ticket?.filmShow?.filmName || 'Không'}</td>
-            </tr>
-            <tr>
-              <th>SUẤT CHIẾU</th>
-               <td>${(ticket?.filmShow?.showTime && ticket?.filmShow?.showDate) ? `${ticket?.filmShow?.showTime}, ${ticket?.filmShow?.showDate}` : 'Không'}</td>
-            </tr>
-            <tr>
-              <th>PHÒNG CHIẾU</th>
-              <td>${ticket?.filmShow?.roomName || 'Không'}</td>
-            </tr>
-            <tr>
-              <th>RẠP</th>
-              <td>CINESTAR BINH DUONG</td>
-            </tr>
-            <tr>
-              <th>SỐ GHẾ</th>
-              <td>${ticket?.filmShow?.seatNames?.length ? ticket?.filmShow?.seatNames.join(", ") : 'Không'}</td>
-            </tr>
-            ${ticket.items.length > 0
-          ? `<tr>
-                     <th>Đồ ăn</th>
-                     <td>${ticket.items
-            .map((item) => `${item.name} x${item.quantity}`)
-            .join(", ")}</td>
-                   </tr>`
-          : ""
-        }
-             ${ticket?.filmShow?.tickets.length > 0
-          ? `<tr>
-                     <th>Loại vé</th>
-                     <td>${ticket?.filmShow?.tickets
-            .map((item) => `${item.name} x${item.quantity}`)
-            .join(", ")}</td>
-                   </tr>`
-          : ""
-        }
+
+          <h1 class="purple-text">XÁC NHẬN ĐẶT PHÒNG VÀ DỊCH VỤ</h1>
+
+          <h2>Thông tin khách hàng</h2>
+          <table>
+            <tr><th>Họ tên</th><td>${bookingData.fullName}</td></tr>
+            <tr><th>Email</th><td>${to}</td></tr>
+            <tr><th>Số điện thoại</th><td>${bookingData.phone}</td></tr>
           </table>
-      
-      ${ticket.items.length > 0 || ticket?.filmShow?.tickets.length > 0 || ticket?.otherDatas?.length > 0
-          ? (() => {
-            let currentIndex = 0;
-            return `
-          <table class="tableSeat" style="margin-top: 50px;">
+
+          <h2>Chi tiết đặt phòng</h2>
+          ${enrichedRoomResults.length > 0
+          ? `
+          <table>
             <tr>
-              <th>STT</th>
-              <th>MẶT HÀNG</th>
-              <th>SỐ LƯỢNG</th>
-              <th>ĐƠN GIÁ (VND)</th>
-              <th>THÀNH TIỀN (VND)</th>
+              <th>Loại phòng</th>
+              <th>Số phòng</th>
+              <th>Ngày nhận phòng</th>
+              <th>Ngày trả phòng</th>
+              <th>Thành tiền (VND)</th>
+              <th>Trạng thái</th>
             </tr>
-            ${ticket.items
-                .map(
-                  (item, index) => `
+            ${enrichedRoomResults
+            .map(
+              (result) => `
                 <tr>
-                  <td>${currentIndex + index + 1}</td>
-                  <td>${item.name}</td>
-                  <td>${item.quantity}</td>
-                  <td>${item.price}</td>
-                  <td>${item.quantity * item.price}</td>
-                </tr>`
-                )
-                .join("")}
-            ${(() => {
-                currentIndex += ticket.items.length;
-                return ticket?.filmShow?.tickets
-                  .map(
-                    (item, index) => `
-                  <tr>
-                    <td>${currentIndex + index + 1}</td>
-                    <td>${item.name}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.price}</td>
-                    <td>${item.quantity * item.price}</td>
-                  </tr>`
-                  )
-                  .join("");
-              })()}
-            ${(() => {
-                currentIndex += ticket?.filmShow?.tickets?.length || 0;
-                return ticket?.otherDatas?.map(
-                  (item, index) => `
-                <tr>
-                  <td>${currentIndex + index + 1}</td>
-                  <td>${item.name} (VIP)</td>
-                  <td>${item.quantity}</td>
-                  <td>${item.price}</td>
-                  <td>${item.quantity * item.price}</td>
-                </tr>`
-                ).join("") || "";
-              })()}
-
-          
-             <tr style="background-color: #6b3fa4; color: white">
-              <td colspan="4">Khuyến mãi</td>
-              <td>${(ticket?.totalPrice - ticket.totalPriceAfterDiscount) || 0}</td>
-            </tr>
-            
-         
-            <tr style="background-color: #6b3fa4; color: white">
-              <td colspan="4">TỔNG TIỀN (VND)</td>
-              <td>${ticket.totalPriceAfterDiscount || ticket.totalPrice}</td>
-            </tr>
-
-          </table>`;
-          })()
-          : ""
+                  <td>${result.TenLoaiPhong || "Không xác định"}</td>
+                  <td>${result.bookedRooms} / ${result.requestedRooms}</td>
+                  <td>${result.startDay || "N/A"}</td>
+                  <td>${result.endDay || "N/A"}</td>
+                  <td>${result.bookings.reduce((sum, booking) => sum + (booking.TienPhong || 0), 0).toLocaleString("vi-VN")
+                }</td>
+                  <td>${result.bookedRooms > 0 ? "Thành công" : `<span class="failed">Thất bại</span>`}</td>
+                </tr>
+                ${result.failedRooms > 0 ? `<tr><td colspan="6" class="failed">${result.message}</td></tr>` : ""}
+              `
+            )
+            .join("")}
+          </table>
+          `
+          : "<p>Không có đặt phòng nào.</p>"
         }
+
+          <h2>Chi tiết đặt dịch vụ</h2>
+          ${enrichedServiceResults.length > 0
+          ? `
+          <table>
+            <tr>
+              <th>Dịch vụ</th>
+              <th>Số lượng</th>
+              <th>Ngày áp dụng</th>
+              <th>Thành tiền (VND)</th>
+              <th>Trạng thái</th>
+            </tr>
+            ${enrichedServiceResults
+            .map(
+              (result) => `
+                <tr>
+                  <td>${result.TenDV || "Không xác định"}</td>
+                  <td>${result.bookedServices} / ${result.requestedServices}</td>
+                  <td>${result.offeredDate || "N/A"}</td>
+                  <td>${(result.totalMoney || 0).toLocaleString("vi-VN")}</td>
+                  <td>${result.bookedServices > 0 ? "Thành công" : `<span class="failed">Thất bại</span>`}</td>
+                </tr>
+                ${result.failedServices > 0 ? `<tr><td colspan="5" class="failed">${result.message}</td></tr>` : ""}
+              `
+            )
+            .join("")}
+          </table>
+          `
+          : "<p>Không có đặt dịch vụ nào.</p>"
+        }
+
+          <h2>Tổng tiền: ${totalMoney.toLocaleString("vi-VN")} VND</h2>
+
           <p>
-            Cảm ơn Quý khách đã xem phim tại Cinestar. Chúc Quý khách một buổi xem phim vui vẻ!
+            Cảm ơn Quý khách đã đặt phòng tại The Royal Hotel. Chúc Quý khách một kỳ nghỉ vui vẻ!
           </p>
         </body>
       </html>
@@ -201,4 +183,4 @@ class EmailService {
   };
 }
 
-export default new EmailService();
+export default EmailService;
