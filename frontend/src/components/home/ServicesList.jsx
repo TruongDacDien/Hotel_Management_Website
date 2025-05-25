@@ -21,7 +21,6 @@ export default function ServicesList({ featured = true }) {
       try {
         const response = await getAllServices();
         if (response) {
-          console.log(response);
           setServices(response);
         }
       } catch {
@@ -30,8 +29,6 @@ export default function ServicesList({ featured = true }) {
     };
     fetchServices();
   }, []);
-
-  console.log(services);
 
   return featured ? (
     // Hiển thị dưới dạng carousel nếu featured = true

@@ -2,14 +2,37 @@ import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
 import cookieParser from "cookie-parser";
 import mainRouter from "./routes.js";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 //enviroment variables section
 dotenv.config();
 const PORT = process.env.DB_PORT || 5000;
 //generate app
 const app = express();
+
+const logDirectory = path.join(__dirname, "logs");
+if (!fs.existsSync(logDirectory)) {
+  fs.mkdirSync(logDirectory);
+}
+
+const accessLogStream = fs.createWriteStream(
+  path.join(logDirectory, "access.log"),
+  { flags: "a" }
+);
+
+// Dùng morgan ghi log ra file
+app.use(
+  morgan(":date[iso] :method :url :status :response-time ms", {
+    stream: accessLogStream,
+  })
+);
 
 //middleware
 app.use(morgan("dev"));

@@ -50,7 +50,7 @@ export default function RoomsList({ featured = true }) {
               <CarouselContent>
                 {rooms.slice(0, 5).map((room) => (
                   <CarouselItem
-                    key={room.id}
+                    key={room.MaLoaiPhong}
                     className="md:basis-1/2 lg:basis-1/3 pl-4"
                   >
                     <RoomCard room={room} />

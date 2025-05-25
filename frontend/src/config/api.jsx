@@ -1,21 +1,33 @@
 import axios from "./axios_custom";
 
-// export const callLogin = async (data) => {
-//   return axios.post("/auth/user/sign-in", { ...data });
-// };
+export const callLogin = async (data) => {
+  return axios.post("/auth/customer/sign-in", { ...data });
+};
 
 export const callSignUp = async (data) => {
   return axios.post("/auth/customer/sign-up", { ...data });
 };
 
-// export const callAccount = async () => {
-//   return axios.get("/auth/user/account");
-// };
+export const callAccount = async () => {
+  return axios.get("/auth/customer/account");
+};
 
-// export const callSignOut = async (data) => {
-//   return axios.get("/auth/user/sign-out", { ...data });
-// };
+export const callSignOut = async (data) => {
+  return axios.get("/auth/customer/sign-out", { ...data });
+};
 
+export const sendCode = async (email) => {
+  return axios.post("/email/send-confirm-code", { email });
+};
+export const checkCode = async (email, verificationCode) => {
+  return axios.post("/email/check-confirm-code", {
+    email,
+    verificationCode,
+  });
+};
+export const sendResetPass = async (email) => {
+  return axios.post("/email/send-reset-password", { email });
+};
 // export const updateUser = async (id, updateData) => {
 //   return axios.put(`/user/user/${id}`, { ...updateData });
 // };

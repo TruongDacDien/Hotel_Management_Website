@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { X } from "lucide-react";
-
 import { cn } from "../../lib/utils";
 
 const ToastProvider = ToastPrimitives.Provider;
@@ -10,7 +9,7 @@ const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm-0 sm-0 sm-auto sm-col md-w-[420px]",
+      "fixed top-4 right-4 z-[100] flex max-h-screen w-full max-w-sm flex-col gap-2 p-4",
       className
     )}
     {...props}
@@ -23,7 +22,7 @@ const Toast = React.forwardRef(({ className, ...props }, ref) => {
     <ToastPrimitives.Root
       ref={ref}
       className={cn(
-        "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all",
+        "group pointer-events-auto relative flex w-full items-start justify-between space-x-4 rounded-md border border-gray-200 bg-white p-4 shadow-lg transition-all",
         className
       )}
       {...props}
@@ -36,7 +35,7 @@ const ToastAction = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover-secondary focus-none focus-2 focus-ring focus-offset-2",
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium text-black hover:bg-gray-100 transition",
       className
     )}
     {...props}
@@ -48,7 +47,7 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover-foreground focus-100 focus-none focus-2",
+      "absolute right-2 top-2 rounded-md p-1 text-gray-500 hover:text-black transition",
       className
     )}
     {...props}
@@ -61,7 +60,7 @@ ToastClose.displayName = "ToastClose";
 const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn("text-sm font-semibold", className)}
+    className={cn("text-sm font-semibold text-black", className)}
     {...props}
   />
 ));
@@ -70,7 +69,7 @@ ToastTitle.displayName = "ToastTitle";
 const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    className={cn("text-sm text-gray-700", className)}
     {...props}
   />
 ));

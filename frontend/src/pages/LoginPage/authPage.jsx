@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Cookies from "js-cookie";
 import {
   Tabs,
   TabsContent,
@@ -24,10 +25,17 @@ import {
 } from "../../components/ui/form";
 import { Input } from "../../components/ui/input";
 import { useForm } from "react-hook-form";
+import { data, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/use-auth";
 
 export default function AuthPage() {
-  const { loginMutation, registerMutation } = useAuth();
+  const {
+    loginMutation,
+    registerMutation,
+    forgotPasswordMutation,
+    verifyCodeMutation,
+    sendResetPassMutation,
+  } = useAuth();
   const [activeTab, setActiveTab] = useState("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
@@ -56,7 +64,9 @@ export default function AuthPage() {
           {showForgotPassword ? (
             <ForgotPasswordForm
               onBack={() => setShowForgotPassword(false)}
-              forgotPasswordMutation={fakeMutation}
+              forgotPasswordMutation={forgotPasswordMutation}
+              verifyCodeMutation={verifyCodeMutation}
+              sendResetPassMutation={sendResetPassMutation}
             />
           ) : (
             <Tabs
@@ -87,7 +97,21 @@ export default function AuthPage() {
 
 function LoginForm({ loginMutation, onForgotPassword }) {
   const form = useForm();
-  const onSubmit = (data) => loginMutation.mutate(data);
+  const navigate = useNavigate();
+  const onSubmit = (data) => {
+    loginMutation.mutate(data, {
+      onSuccess: (userData) => {
+        const { accesssToken, refreshToken } = userData.tokens;
+
+        // Lưu token vào cookie
+        Cookies.set("access_token", accesssToken, { expires: 1 }); // expires: 1 = 1 ngày
+        Cookies.set("refresh_token", refreshToken, { expires: 7 });
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        navigate("/"); // ✅ điều hướng về trang chủ
+      },
+    });
+  };
 
   return (
     <Form {...form}>
@@ -102,12 +126,12 @@ function LoginForm({ loginMutation, onForgotPassword }) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="identifier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Tên tài khoản</FormLabel>
                   <FormControl>
-                    <Input placeholder="your.email@example.com" {...field} />
+                    <Input placeholder="irisus123" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +171,10 @@ function LoginForm({ loginMutation, onForgotPassword }) {
 
 function RegisterForm({ registerMutation }) {
   const form = useForm();
-  const onSubmit = (data) => registerMutation.mutate(data);
+  const onSubmit = (data) => {
+    console.log("Form data trước khi gửi:", data);
+    registerMutation.mutate(data);
+  };
 
   return (
     <Form {...form}>
@@ -162,7 +189,7 @@ function RegisterForm({ registerMutation }) {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="fullName"
+              name="fullname"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Họ và tên</FormLabel>
@@ -248,9 +275,38 @@ function RegisterForm({ registerMutation }) {
   );
 }
 
-function ForgotPasswordForm({ onBack, forgotPasswordMutation }) {
+function ForgotPasswordForm({
+  onBack,
+  forgotPasswordMutation,
+  verifyCodeMutation,
+}) {
+  const [step, setStep] = useState("email"); // email | verify | done
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm();
-  const onSubmit = (data) => forgotPasswordMutation.mutate(data);
+  const onSubmit = async (data) => {
+    console.log(data.email);
+
+    if (step === "email") {
+      setIsLoading(true);
+      setEmail(data.email);
+      await forgotPasswordMutation.mutateAsync(data.email); // Gửi mã
+      setStep("verify");
+      setIsLoading(false);
+    } else if (step === "verify") {
+      const res = await verifyCodeMutation.mutateAsync({
+        email,
+        verificationCode: data.code,
+      });
+      console.log(res);
+
+      if (res.success) {
+        toast({ title: "Mã đúng" });
+        await sendResetPassMutation.mutateAsync(email);
+        setStep("done");
+      }
+    }
+  };
 
   return (
     <Form {...form}>
@@ -259,28 +315,67 @@ function ForgotPasswordForm({ onBack, forgotPasswordMutation }) {
           <CardHeader>
             <CardTitle>Đặt lại mật khẩu</CardTitle>
             <CardDescription>
-              Nhập email để chúng tôi gửi đường dẫn lấy lại mật khẩu
+              {step === "email"
+                ? "Nhập email để gửi mã xác nhận"
+                : step === "verify"
+                ? "Nhập mã xác nhận bạn nhận được"
+                : "Mật khẩu mới đã được gửi qua email"}
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="your.email@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full">
-              Gửi dường dẫn
-            </Button>
+            {step === "email" && (
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="your.email@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {step === "verify" && (
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mã xác nhận</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập mã xác nhận" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {step === "done" && (
+              <p className="text-center text-sm text-muted-foreground">
+                Mật khẩu mới đã được gửi đến email của bạn.
+              </p>
+            )}
           </CardContent>
-          <CardFooter className="flex justify-center">
+
+          <CardFooter className="flex flex-col gap-2">
+            {step === "email" && (
+              <Button variant="custom" type="submit" className="w-full">
+                {isLoading ? "Đang gửi..." : "Gửi mã xác nhận"}
+              </Button>
+            )}
+
+            {step === "verify" && (
+              <Button variant="custom" type="submit" className="w-full">
+                {isLoading ? "Đang xác nhận..." : "Gửi mã xác nhận"}
+              </Button>
+            )}
+
             <Button
               variant="link"
               onClick={onBack}

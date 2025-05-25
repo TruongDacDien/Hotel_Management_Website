@@ -44,6 +44,7 @@
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.5.0",
     "install": "^0.13.0",
+    "js-cookie": "^3.0.5",
     "line-clamp": "^1.0.0",
     "lucide-react": "^0.485.0",
     "npm": "^11.2.0",

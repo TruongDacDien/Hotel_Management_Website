@@ -1,36 +1,48 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import Cookies from "js-cookie";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "../lib/queryClient";
 import { useToast } from "../hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { callSignUp } from "../config/api";
+import {
+  callSignUp,
+  callLogin,
+  callSignOut,
+  sendCode,
+  sendResetPass,
+  checkCode,
+} from "../config/api";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   console.log("AuthProvider mounted");
   const { toast } = useToast();
-  //const navigate = useNavigate(); // Sử dụng useNavigate để điều hướng
+
   const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials) => {
-      console.warn("Mocking login request", credentials);
-      return { id: 1, name: "Guest User", email: credentials.email };
+      const res = await callLogin(credentials);
+
+      if (!res.success) throw new Error(res.message || "Đăng ký thất bại");
+      return res.data;
     },
     onSuccess: (userData) => {
+      console.log("onSuccess", userData);
       setUser(userData);
-      queryClient.setQueryData(["/api/user"], userData);
-      toast({
-        title: "Welcome back!",
-        description: `You've successfully signed in.`,
-      });
-      window.location.href = "/"; // Sửa lỗi: Thay setLocation("/") bằng navigate("/")
+      toast({ title: "Đăng nhập thành công" });
     },
     onError: () => {
       toast({
-        title: "Login failed",
-        description: "Invalid email or password. Please try again.",
+        title: "Thất bại",
+        description: "Không thể đăng nhập",
         variant: "destructive",
       });
     },
@@ -44,9 +56,8 @@ export function AuthProvider({ children }) {
     },
     onSuccess: (userData) => {
       setUser(userData);
-      // queryClient.setQueryData(["/api/user"], userData);
       toast({ title: "Đăng ký thành công" });
-      window.location.href = "/"; // Sửa lỗi
+      window.location.href = "/auth"; // Sửa lỗi
     },
     onError: () => {
       toast({
@@ -59,21 +70,71 @@ export function AuthProvider({ children }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      console.warn("Mocking logout request");
+      const res = await callSignOut();
+      if (!res.success) throw new Error(res.message || "Đăng xuất thất bại");
+      return res.data;
     },
     onSuccess: () => {
       setUser(null);
-      queryClient.setQueryData(["/api/user"], null);
-      toast({
-        title: "Logged out",
-        description: "You've been successfully logged out.",
-      });
-      window.location.href = "/"; // Sửa lỗi
+      localStorage.removeItem("user");
+      toast({ title: "Đăng xuất thành công" });
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500); // Sửa lỗi
     },
     onError: () => {
       toast({
         title: "Logout failed",
         description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (email) => {
+      const res = await sendCode(email);
+      if (!res.success) throw new Error(res.message || "Gửi yêu cầu thất bại");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast({ title: "Yêu cầu đặt lại mật khẩu đã được gửi" });
+    },
+    onError: () => {
+      toast({
+        title: "Thất bại",
+        description: "Không thể gửi yêu cầu",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const verifyCodeMutation = useMutation({
+    mutationFn: async ({ email, verificationCode }) => {
+      const res = await checkCode(email, verificationCode);
+      return res;
+    },
+    onError: () => {
+      toast({
+        title: "Thất bại",
+        description: "Không thể gửi yêu cầu",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendResetPassMutation = useMutation({
+    mutationFn: async (email) => {
+      const res = await sendResetPass(email);
+      return res.data;
+    },
+    onSuccess: async () => {
+      toast({ title: "Mật khẩu mới đã được gửi về email" });
+    },
+    onError: () => {
+      toast({
+        title: "Thất bại",
+        description: "Không thể gửi yêu cầu",
         variant: "destructive",
       });
     },
@@ -88,6 +149,9 @@ export function AuthProvider({ children }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        forgotPasswordMutation,
+        verifyCodeMutation,
+        sendResetPassMutation,
       }}
     >
       {children}
