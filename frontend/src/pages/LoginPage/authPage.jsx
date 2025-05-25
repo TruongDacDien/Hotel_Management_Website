@@ -279,6 +279,7 @@ function ForgotPasswordForm({
   onBack,
   forgotPasswordMutation,
   verifyCodeMutation,
+  sendResetPassMutation,
 }) {
   const [step, setStep] = useState("email"); // email | verify | done
   const [email, setEmail] = useState("");
@@ -299,9 +300,9 @@ function ForgotPasswordForm({
         verificationCode: data.code,
       });
       console.log(res);
-
+    
       if (res.success) {
-        toast({ title: "Mã đúng" });
+        //toast({ title: "Mã đúng" });
         await sendResetPassMutation.mutateAsync(email);
         setStep("done");
       }
@@ -372,7 +373,7 @@ function ForgotPasswordForm({
 
             {step === "verify" && (
               <Button variant="custom" type="submit" className="w-full">
-                {isLoading ? "Đang xác nhận..." : "Gửi mã xác nhận"}
+                {isLoading ? "Đang xác nhận..." : "Xác nhận"}
               </Button>
             )}
 

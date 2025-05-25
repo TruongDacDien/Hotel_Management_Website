@@ -5,13 +5,13 @@ import RoomTypeService from "./roomTypeService.js";
 import ServiceService from "./serviceService.js";
 
 class EmailService {
-  static sendEmail = async (to, subject, text) => {
+  static sendEmail = async (to, subject, html) => {
     try {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: to,
         subject: subject,
-        text: text,
+        html: html
       });
       console.log("Email sent successfully!");
       return true;
