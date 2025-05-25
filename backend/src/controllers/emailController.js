@@ -28,11 +28,20 @@ class EmailController {
     };
 
     const verificationCode = randomVerificationCode();
-    await EmailService.sendEmail(
-      email,
-      "Verification Code",
-      `Your verification code is: ${verificationCode}`
-    );
+    const content = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+      </head>
+      <body>
+        <p>Your verification code is: <strong>${verificationCode}</strong></p>
+        <p>The confirmation code is only valid for 3 minutes.</p>
+      </body>
+      </html>
+      `;
+
+    await EmailService.sendEmail(email, "Verification Code", content);
     await EmailService.storeConfirmCode(email, verificationCode);
 
     return res.status(200).json({
@@ -72,11 +81,19 @@ class EmailController {
     const update = await CustomerAccountService.findByIdAndUpdatePassword(user.MaTKKH, hashedPassword);
 
     // Gửi email reset password
-    await EmailService.sendEmail(
-      email,
-      "Reset Password",
-      `Your new password is: ${newPassword}`
-    );
+    const content = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+      </head>
+      <body>
+        <p>Your new password is: ${newPassword}</strong></p>
+        <p>Please log in and change your password to protect your account.</p>
+      </body>
+      </html>
+      `;
+    await EmailService.sendEmail(email,"Reset Password", content);
 
     return res.status(200).json({
       msg: "Password reset successfully. Please check your email for the new password.",
@@ -104,9 +121,6 @@ class EmailController {
         success: false,
       });
     }
-
-    user.userIsConfirmed = true;
-    await user.save();
 
     return res.status(200).json({
       msg: "Confirmed successfully!",
