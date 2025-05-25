@@ -13,8 +13,16 @@ class RatingServiceService {
         return result;
     }
 
+    static async getByServiceId(serviceId) {
+        const result = await RatingService.getByServiceId(serviceId);
+        if (!result) {
+            throw new Error("Không tìm thấy đánh giá");
+        }
+        return result;
+    }
+
     static async create(data) {
-        if (!data.MaDV || !data.MaKH || !data.SoSao || !data.NoiDung) {
+        if (!data.MaDV || !data.MaTKKH || !data.SoSao || !data.NoiDung) {
             throw new Error("Thiếu các trường bắt buộc");
         }
         if (typeof data.SoSao !== "number" || data.SoSao < 1 || data.SoSao > 5) {
