@@ -228,3 +228,15 @@
 2025-05-25T15:24:15.669Z POST /api/email/check-confirm-code 200 34.590 ms
 2025-05-25T15:24:15.672Z OPTIONS /api/email/send-reset-password 204 0.116 ms
 2025-05-25T15:24:18.506Z POST /api/email/send-reset-password 200 2832.399 ms
+2025-05-25T15:38:26.933Z GET /api/rooms 200 52.715 ms
+2025-05-25T15:39:13.348Z GET /api/ratingRoomTypes/1 200 41.694 ms
+2025-05-25T15:39:42.255Z GET /api/ratingRoomTypes 200 2077.206 ms
+2025-05-25T15:43:29.869Z GET /api/ratingRoomTypes/1 200 2464.532 ms
+2025-05-25T15:43:36.591Z GET /api/ratingRoomTypes/1 200 59.995 ms
+2025-05-25T15:43:47.777Z GET /api/ratingRoomTypes 200 817.824 ms
+2025-05-25T15:43:57.649Z GET /api/ratingRoomTypes/1 200 34.443 ms
+2025-05-25T16:11:17.541Z GET /api/ratingRoomTypes/roomtype/1 200 40.386 ms
+2025-05-25T16:11:37.137Z GET /api/ratingServices/service/1 500 39.294 ms
+2025-05-25T16:12:36.121Z GET /api/ratingServices/service/2 500 108.621 ms
+2025-05-25T16:17:06.057Z POST /api/ratingServices 201 49.192 ms
+2025-05-25T16:17:43.319Z GET /api/ratingServices/service/1 200 38.328 ms

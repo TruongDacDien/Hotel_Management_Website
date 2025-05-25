@@ -13,8 +13,16 @@ class RatingRoomTypeService {
         return result;
     }
 
+    static async getByRoomTypeId(roomTypeId) {
+        const result = await RatingRoomType.getByRoomTypeId(roomTypeId);
+        if (!result) {
+            throw new Error("Không tìm thấy đánh giá");
+        }
+        return result;
+    }
+
     static async create(data) {
-        if (!data.MaLoaiPhong || !data.MaKH || !data.SoSao || !data.NoiDung) {
+        if (!data.MaLoaiPhong || !data.MaTKKH || !data.SoSao || !data.NoiDung) {
             throw new Error("Thiếu các trường bắt buộc");
         }
         if (typeof data.SoSao !== "number" || data.SoSao < 1 || data.SoSao > 5) {

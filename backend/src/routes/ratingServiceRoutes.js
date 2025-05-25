@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get("/", ratingServiceController.getAll);
 router.get("/:ratingId", ratingServiceController.getById);
+router.get("/service/:serviceId", ratingServiceController.getByServiceId);
 router.post("/", ratingServiceController.create);
 router.put("/:ratingId", ratingServiceController.update);
 router.delete("/:ratingId", ratingServiceController.delete);

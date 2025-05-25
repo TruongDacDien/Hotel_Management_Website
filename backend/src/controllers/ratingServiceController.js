@@ -13,6 +13,12 @@ class RatingServiceController {
         res.json(item);
     });
 
+    getByServiceId = expressAsyncHandler(async (req, res) => {
+        const { serviceId } = req.params;
+        const item = await RatingServiceService.getByServiceId(serviceId);
+        res.json(item);
+    });
+
     create = expressAsyncHandler(async (req, res) => {
         const newItem = await RatingServiceService.create(req.body);
         res.status(201).json(newItem);

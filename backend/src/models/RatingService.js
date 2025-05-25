@@ -26,12 +26,25 @@ class RatingService {
         }
     }
 
+    static async getByServiceId(id) {
+        try {
+            const [rows] = await this.pool.query('SELECT * FROM DanhGiaDV WHERE MaDV = ?', [id]);
+            if (rows.length === 0) {
+                throw new Error("Role not found");
+            }
+            return rows;
+        } catch (error) {
+            console.error(`Error fetching rating (ID: ${id}):`, error);
+            throw new Error("Error fetching rating");
+        }
+    }
+
     static async create(data) {
         try {
-            const { MaLoaiPhong, MaKH, SoSao, NoiDung } = data;
+            const { MaDV, MaTKKH, SoSao, NoiDung } = data;
             const [result] = await this.pool.query(
-                'INSERT INTO DanhGiaDV (MaDV, MaKH, SoSao, NoiDung, ThoiGian) VALUES (?, ?, ?, ?, NOW())',
-                [MaLoaiPhong, MaKH, SoSao, NoiDung]
+                'INSERT INTO DanhGiaDV (MaDV, MaTKKH, SoSao, NoiDung, ThoiGian) VALUES (?, ?, ?, ?, NOW())',
+                [MaDV, MaTKKH, SoSao, NoiDung]
             );
         } catch (error) {
             console.error("Error creating rating:", error);
@@ -41,12 +54,12 @@ class RatingService {
 
     static async update(ratingId, data) {
         try {
-            const { MaDV, MaKH, SoSao, NoiDung } = data;
+            const { MaDV, MaTKKH, SoSao, NoiDung } = data;
             const [result] = await this.pool.query(
                 `UPDATE DanhGiaDV
-                 SET MaDV = ?, MaKH = ?, SoSao = ?, NoiDung = ?, ThoiGian = NOW()
+                 SET MaDV = ?, MaTKKH = ?, SoSao = ?, NoiDung = ?, ThoiGian = NOW()
                  WHERE MaDGDV = ?`,
-                [MaDV, MaKH, SoSao, NoiDung, ratingId]
+                [MaDV, MaTKKH, SoSao, NoiDung, ratingId]
             );
             if (result.affectedRows === 0) {
                 throw new Error("Rating not found or not updated");

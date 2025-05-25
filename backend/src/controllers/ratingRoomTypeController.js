@@ -13,6 +13,12 @@ class RatingRoomTypeController {
         res.json(item);
     });
 
+    getByRoomTypeId = expressAsyncHandler(async (req, res) => {
+        const { roomTypeId } = req.params;
+        const item = await RatingRoomTypeService.getByRoomTypeId(roomTypeId);
+        res.json(item);
+    });
+
     create = expressAsyncHandler(async (req, res) => {
         const newItem = await RatingRoomTypeService.create(req.body);
         res.status(201).json(newItem);
