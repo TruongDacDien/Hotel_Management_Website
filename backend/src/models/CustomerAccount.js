@@ -83,19 +83,25 @@ class CustomerAccount {
   // Cập nhật tài khoản khách hàng
   static async update(accountId, data) {
     try {
-      const { username, password, email, avatarId, avatarURL } = data;
+      const { password, email, avatarId, avatarURL, fullName, phone, identification, address, sex, country } = data;
       const hashPassword = bcrypt.hashSync(password, 10);
-      const [result] = await this.pool.query(
+      const account = await this.findById(accountId);
+      handleDestroyCloudinary(account.AvatarId);
+      const [result1] = await this.pool.query(
         `UPDATE TaiKhoanKH
-                 SET Username = ?, Password = ?, Email = ?, AvatarId = ?, AvatarURL = ?
+                 SET Password = ?, Email = ?, AvatarId = ?, AvatarURL = ?
                  WHERE MaTKKH = ?`,
-        [username, hashPassword, email, avatarId, avatarURL, accountId]
+        [hashPassword, email, avatarId, avatarURL, accountId]
       );
-      if (result.affectedRows === 0) {
+      const [result2] = await this.pool.query(
+        `UPDATE KhachHang
+                 SET TenKH = ?, SDT = ?, CCCD = ?, DiaChi = ?, GioiTinh = ?, QuocTich = ?
+                 WHERE MaKH = ?`,
+        [fullName, phone, identification, address, sex, country, account.MaKH]
+      );
+      if (result1.affectedRows === 0 && result2.affectedRows === 0) {
         throw new Error("Account not found or not updated");
       }
-      handleDestroyCloudinary(oldFilm.public_ID);
-      return { accountId, ...data };
     } catch (error) {
       console.error(`Error updating account (ID: ${accountId}):`, error);
       throw new Error("Error updating account");
