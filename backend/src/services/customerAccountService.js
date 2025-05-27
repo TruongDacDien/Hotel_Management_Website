@@ -6,7 +6,7 @@ class CustomerAccountService {
     }
 
     static async getById(accountId) {
-        const result = await CustomerAccount.getById(accountId);
+        const result = await CustomerAccount.findById(accountId);
         if (!result) throw new Error('Account not found');
         return result;
     }
