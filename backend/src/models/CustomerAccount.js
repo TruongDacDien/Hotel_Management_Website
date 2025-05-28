@@ -83,15 +83,14 @@ class CustomerAccount {
   // Cập nhật tài khoản khách hàng
   static async update(accountId, data) {
     try {
-      const { password, email, avatarId, avatarURL, fullName, phone, identification, address, sex, country } = data;
-      const hashPassword = bcrypt.hashSync(password, 10);
+      const {email, avatarId, avatarURL, fullName, phone, identification, address, sex, country } = data;
       const account = await this.findById(accountId);
       handleDestroyCloudinary(account.AvatarId);
       const [result1] = await this.pool.query(
         `UPDATE TaiKhoanKH
-                 SET Password = ?, Email = ?, AvatarId = ?, AvatarURL = ?
+                 SET Email = ?, AvatarId = ?, AvatarURL = ?
                  WHERE MaTKKH = ?`,
-        [hashPassword, email, avatarId, avatarURL, accountId]
+        [email, avatarId, avatarURL, accountId]
       );
       const [result2] = await this.pool.query(
         `UPDATE KhachHang
