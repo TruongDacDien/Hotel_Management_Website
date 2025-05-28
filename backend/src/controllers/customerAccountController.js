@@ -1,6 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
 import CustomerAccountService from "../services/customerAccountService.js";
 import { handleUploadCloudinary } from "../utils/cloudinary.js";
+import bcrypt from "bcrypt";
 
 class CustomerAccountController {
     getAll = expressAsyncHandler(async (req, res) => {
@@ -35,6 +36,13 @@ class CustomerAccountController {
     delete = expressAsyncHandler(async (req, res) => {
         const { accountId } = req.params;
         await CustomerAccountService.delete(accountId);
+        res.status(204).end();
+    });
+
+    findByIdAndUpdatePassword = expressAsyncHandler(async (req, res) => {
+        const { accountId, password } = req.params;
+        const hashPassword = bcrypt.hashSync(password, 10);
+        await CustomerAccountService.findByIdAndUpdatePassword(accountId, hashPassword);
         res.status(204).end();
     });
 }
