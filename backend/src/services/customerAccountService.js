@@ -19,7 +19,7 @@ class CustomerAccountService {
   static async create(data) {
     if (
       !data.username ||
-      !!data.fullname ||
+      !data.fullname ||
       !data.phone ||
       !data.email ||
       !data.password
@@ -30,7 +30,6 @@ class CustomerAccountService {
   }
 
   static async update(accountId, data) {
-    await this.getById(accountId); // Check existence
     return await CustomerAccount.update(accountId, data);
   }
 

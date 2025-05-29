@@ -237,7 +237,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex justify-center items-center">
                   <img
-                    src={userInfor?.avatarUrl || defaultAvatar}
+                    src={userInfor?.AvatarURL || defaultAvatar}
                     alt="Avatar"
                     className="w-40 h-40 rounded-full object-cover"
                   />

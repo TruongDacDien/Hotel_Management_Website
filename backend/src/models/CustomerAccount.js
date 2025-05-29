@@ -54,7 +54,7 @@ class CustomerAccount {
       const hashPassword = bcrypt.hashSync(password, 10);
       const [accountResult] = await connection.query(
         `INSERT INTO TaiKhoanKH (Username, Password, Email, AvatarId, AvatarURL, MaKH, LastLogin, Disabled)
-                 VALUES (?, ?, ?, ?, ?, NOW(), 0)`,
+                 VALUES (?, ?, ?, ?, ?, ?, NOW(), 0)`,
         [
           username,
           hashPassword,
@@ -96,7 +96,16 @@ class CustomerAccount {
       } = data;
       const account = await this.findById(accountId);
 
-      handleDestroyCloudinary(account.AvatarId);
+      //Xóa ảnh cũ nếu có up ảnh mới, không thì bỏ qua
+      if (
+        data.avatarId && // có avatarId mới
+        account.AvatarId && // có avatarId cũ
+        account.AvatarId !== data.avatarId && // khác avatarId cũ
+        !account.AvatarId.startsWith("user_default") // không phải ảnh mặc định
+      ) {
+        await handleDestroyCloudinary(account.AvatarId);
+      }
+
       const [result1] = await this.pool.query(
         `UPDATE TaiKhoanKH
                  SET Email = ?, AvatarId = ?, AvatarURL = ?
@@ -109,7 +118,7 @@ class CustomerAccount {
                  WHERE MaKH = ?`,
         [fullName, phone, identification, address, sex, country, account.MaKH]
       );
-      if (result1.affectedRows === 0 && result2.affectedRows === 0) {
+      if (result1.affectedRows === 0 || result2.affectedRows === 0) {
         throw new Error("Account not found or not updated");
       }
     } catch (error) {
