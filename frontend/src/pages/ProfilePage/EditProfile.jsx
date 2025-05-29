@@ -5,12 +5,13 @@ export default function EditProfileModal({ userData, onClose, onSave }) {
     fullName: userData.TenKH || "",
     phone: userData.SDT || "",
     identification: userData.CCCD || "",
-    address: userData.address || "",
+    address: userData.DiaChi || "",
     email: userData.Email || "",
     sex: userData.GioiTinh || "Chưa xác định",
     country: userData.QuocTich || "Việt Nam",
-    avatar: null,
-    avatarURL: userData.avatarURL || "",
+    avatarId: userData.AvatarId || "",
+    avatarURL: userData.AvatarURL || "",
+    avatarFile: null
   });
 
   const handleChange = (e) => {
@@ -19,11 +20,12 @@ export default function EditProfileModal({ userData, onClose, onSave }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setForm({
-      ...form,
-      avatar: file,
-      avatarURL: file ? URL.createObjectURL(file) : form.avatarURL,
-    });
+    if (file) {
+      setForm({
+        ...form,
+        avatarFile: file,
+      });
+    }
   };
 
   const handleSubmit = () => {
@@ -90,10 +92,10 @@ export default function EditProfileModal({ userData, onClose, onSave }) {
           className="w-full p-2 border rounded"
         />
 
-        {form.avatarURL && (
+        {(form.avatarURL && form.avatarFile) && (
           <div className="flex justify-center">
             <img
-              src={form.avatarURL}
+              src={form.avatarURL ? URL.createObjectURL(form.avatarFile) : form.avatarURL}
               alt="Avatar"
               className="w-24 h-24 object-cover rounded-full border"
             />
@@ -103,6 +105,7 @@ export default function EditProfileModal({ userData, onClose, onSave }) {
         <input
           type="file"
           accept="image/*"
+          multiple={false}
           onChange={handleFileChange}
           className="w-full"
         />
