@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
@@ -42,48 +42,78 @@ import {
 import { Separator } from "../../components/ui/separator";
 
 // Mock Data
-const mockCartItems = [
-  {
-    id: "1",
-    type: "room",
-    name: "Deluxe Room",
-    imageUrl:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    price: 100,
-    quantity: 2,
-    roomId: "r1",
-    checkIn: "2025-05-01",
-    checkOut: "2025-05-03",
-  },
-  {
-    id: "2",
-    type: "service",
-    name: "Spa Package",
-    imageUrl:
-      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-    price: 50,
-    quantity: 1,
-    serviceId: "s1",
-    offeredDate: "2025-05-03",
-  },
-];
 
 export default function CartPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { items, isLoaded, removeItem, updateQuantity, clearCart, totalPrice } =
+    useCart();
 
-  //   const { items, removeItem, updateQuantity, clearCart, totalPrice } =
-  //     useCart();
-  //   const { toast } = useToast();
-  //   const [bookingComplete, setBookingComplete] = useState(false);
+  console.log(items);
+  useEffect(() => {
+    const rawCart = localStorage.getItem("hotel-cart");
+    console.log("Cart in localStorage (raw):", rawCart);
+  }, []);
 
-  //   const form = useForm({
-  //     defaultValues: {
-  //       name: "",
-  //       email: "",
-  //       phone: "",
-  //     },
-  //   });
+  const handleQuantityChange = (id, quantity) => {
+    updateQuantity(id, quantity); // dùng hàm từ context
+  };
+
+  const handleRemove = (id) => {
+    removeItem(id); // dùng hàm từ context
+  };
+
+  const handleClearCart = () => {
+    clearCart();
+  };
+
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+    },
+  });
+
+  const onSubmit = (data) => {
+    toast({
+      title: "Mock submit",
+      description: JSON.stringify(data),
+    });
+  };
+
+  if (!isLoaded) {
+    return <div>Loading cart...</div>; // hoặc spinner
+  }
+
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    const firstGuest = items[0].guestInfo;
+    const allSame = items.every(
+      (item) =>
+        item.guestInfo.name === firstGuest.name &&
+        item.guestInfo.email === firstGuest.email &&
+        item.guestInfo.phone === firstGuest.phone
+    );
+
+    if (allSame) {
+      form.setValue("name", firstGuest.name);
+      form.setValue("email", firstGuest.email);
+      form.setValue("phone", firstGuest.phone);
+    }
+  }, [items, form]);
+
+  // const { toast } = useToast();
+  // const [bookingComplete, setBookingComplete] = useState(false);
+
+  // const form = useForm({
+  //   defaultValues: {
+  //     name: "",
+  //     email: "",
+  //     phone: "",
+  //   },
+  // });
 
   //   const prepareBookingData = (formData) => {
   //     const bookings = items.map((item) => {
@@ -205,60 +235,26 @@ export default function CartPage() {
   //     );
   //   }
 
-  const [items, setItems] = useState(mockCartItems);
-
-  const updateQuantity = (id, quantity) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
-    );
-  };
-
-  const removeItem = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const clearCart = () => {
-    setItems([]);
-  };
-
-  const totalPrice = items.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-    },
-  });
-
-  const onSubmit = (data) => {
-    toast({
-      title: "Mock submit",
-      description: JSON.stringify(data),
-    });
-  };
-
   return (
     <div className="container mx-auto px-4 py-32">
-      <h1 className="text-3xl font-bold text-primary mb-8">Your Cart</h1>
+      <h1 className="text-3xl font-bold text-primary mb-8">
+        Thông tin đặt chỗ
+      </h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Cart Items ({items.length})</CardTitle>
+              <CardTitle>Tổng mục đã chọn ({items.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[200px]">Item</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-center">Quantity</TableHead>
-                    <TableHead className="text-right">Subtotal</TableHead>
+                    <TableHead className="w-[200px]">Hạng mục</TableHead>
+                    <TableHead>Chi tiết</TableHead>
+                    <TableHead className="text-right">Đơn giá</TableHead>
+                    <TableHead className="text-center">Số lượng</TableHead>
+                    <TableHead className="text-right">Tạm tính</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -275,7 +271,7 @@ export default function CartPage() {
                           <div>
                             <div className="font-medium">{item.name}</div>
                             <div className="text-sm text-neutral-500">
-                              {item.type === "room" ? "Room" : "Service"}
+                              {item.type === "room" ? "Phòng" : "Dịch vụ"}
                             </div>
                           </div>
                         </div>
@@ -307,18 +303,24 @@ export default function CartPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               <span>
-                                Offered date:{" "}
+                                Ngày áp dụng:{" "}
                                 {new Date(
                                   item.offeredDate
                                 ).toLocaleDateString()}
                               </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span>{item.roomName}</span>
                             </div>
                           </div>
                         )}
                       </TableCell>
 
                       <TableCell className="text-right">
-                        ${item.price.toFixed(2)}
+                        {Number(item.price).toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center">
@@ -343,7 +345,7 @@ export default function CartPage() {
                             size="icon"
                             className="h-8 w-8 rounded-l-none"
                             onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
+                              handleQuantityChange(item.id, item.quantity + 1)
                             }
                           >
                             <Plus className="h-4 w-4" />
@@ -351,13 +353,19 @@ export default function CartPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {Number(item.price * item.quantity).toLocaleString(
+                          "vi-VN",
+                          {
+                            style: "currency",
+                            currency: "VND",
+                          }
+                        )}
                       </TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemove(item.id)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
@@ -369,10 +377,10 @@ export default function CartPage() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline" onClick={() => navigate("/")}>
-                Continue Shopping
+                Tiếp tục đặt
               </Button>
-              <Button variant="destructive" onClick={() => clearCart()}>
-                Clear Cart
+              <Button variant="destructive" onClick={() => handleClearCart()}>
+                Xóa giỏ hàng
               </Button>
             </CardFooter>
           </Card>
@@ -381,7 +389,7 @@ export default function CartPage() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Booking Details</CardTitle>
+              <CardTitle>Thông tin đặt chỗ</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -394,7 +402,7 @@ export default function CartPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel>Họ và tên</FormLabel>
                         <FormControl>
                           <Input placeholder="John Doe" {...field} />
                         </FormControl>
@@ -407,7 +415,7 @@ export default function CartPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel>Địa chỉ Email</FormLabel>
                         <FormControl>
                           <Input placeholder="john@example.com" {...field} />
                         </FormControl>
@@ -420,7 +428,7 @@ export default function CartPage() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number (Optional)</FormLabel>
+                        <FormLabel>Số điện thoại </FormLabel>
                         <FormControl>
                           <Input placeholder="+1 (123) 456-7890" {...field} />
                         </FormControl>
@@ -431,18 +439,31 @@ export default function CartPage() {
                   <Separator className="my-4" />
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>${totalPrice.toFixed(2)}</span>
+                      <span>Tạm tính</span>
+                      <span>
+                        {totalPrice.toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Taxes</span>
-                      <span>${(totalPrice * 0.1).toFixed(2)}</span>
+                      <span>Thuế</span>
+                      <span>
+                        {(totalPrice * 0.1).toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
+                      </span>
                     </div>
                     <Separator className="my-2" />
                     <div className="flex justify-between font-bold">
-                      <span>Total</span>
+                      <span>Tổng cộng</span>
                       <span className="text-primary">
-                        ${(totalPrice * 1.1).toFixed(2)}
+                        {(totalPrice * 1.1).toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
                       </span>
                     </div>
                   </div>
@@ -461,7 +482,7 @@ export default function CartPage() {
                     // sửa dòng này:
                     disabled={false} // hoặc tạo biến giả để thay thế bookingMutation
                   >
-                    {"Complete Booking"}
+                    {"Hoàn tất đặt chỗ"}
                   </Button>
                 </form>
               </Form>

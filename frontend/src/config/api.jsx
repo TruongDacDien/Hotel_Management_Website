@@ -28,6 +28,45 @@ export const checkCode = async (email, verificationCode) => {
 export const sendResetPass = async (email) => {
   return axios.post("/email/send-reset-password", { email });
 };
+
+export const getAllRatingRoom = async () => {
+  return axios.get("/ratingRoomTypes");
+};
+
+export const getRatingByRoomId = async (ratingId) => {
+  return axios.get(`/ratingRoomTypes/${ratingId}`);
+};
+
+export const createRatingByRoom = async (data) => {
+  return axios.post("/ratingRoomTypes", { ...data });
+};
+
+export const getAllRatingService = async () => {
+  return axios.get("/ratingServices");
+};
+
+export const getRatingByServiceId = async (ratingId) => {
+  return axios.get(`/ratingServices/${ratingId}`);
+};
+
+export const getCustomerAccountById = async (Id) => {
+  return axios.get(`/customerAccounts/${Id}`);
+};
+
+export const updateCustomerAccountById = async (Id, data) => {
+  data.forEach((value, key) => {
+    console.log(`${key}:`, value);
+  });
+  return axios.put(`/customerAccounts/${Id}`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const getCustomerById = async (Id) => {
+  return axios.get(`/customers/${Id}`);
+};
 // export const updateUser = async (id, updateData) => {
 //   return axios.put(`/user/user/${id}`, { ...updateData });
 // };

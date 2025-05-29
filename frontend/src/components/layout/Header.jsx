@@ -4,6 +4,8 @@ import { Menu, X, LogIn, LogOut, UserPlus } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { CartIcon } from "../../components/cart/CartIcon";
 import { useAuth } from "../../hooks/use-auth";
+import { UserCircle } from "lucide-react";
+import defaultAvatar from "../../assets/avatar-default.svg";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -69,9 +71,23 @@ export default function Header() {
             <CartIcon />
             {user ? (
               <div className="flex items-center space-x-3">
-                <span className="text-sm">
+                {/* <span className="text-sm">
                   Chào, {user.name?.split(" ")[0]}
-                </span>
+                </span> */}
+                {/* Nút/link dẫn tới /userprofile */}
+                <Link
+                  to="/userprofile"
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
+                  <img
+                    src={user.avatar || defaultAvatar}
+                    alt="Avatar"
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                  <span className="text-sm font-medium">
+                    Hi, {user.name?.split(" ")[0]}
+                  </span>
+                </Link>
                 {user.isAdmin && (
                   <Link to="/admin">
                     <Button
