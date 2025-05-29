@@ -1,32 +1,22 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useCart } from "../../hooks/use-cart";
 
 export function CartIcon() {
-  const { totalItems } = useCart();
+  const { items, totalItems } = useCart();
 
   return (
     <Link to="/cart">
-      <Button
-        asChild
-        variant="ghost"
-        size="icon"
-        className="relative cursor-pointer"
-        aria-label="Shopping cart"
-      >
-        <span>
-          <ShoppingCart className="h-5 w-5" />
-          {totalItems > 0 && (
-            <span
-              className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
-              aria-live="polite"
-            >
-              {totalItems > 9 ? "9+" : totalItems}
-            </span>
-          )}
-        </span>
-      </Button>
+      <div className="relative inline-block">
+        <ShoppingCart className="h-6 w-6" />
+        {totalItems > 0 && (
+          <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+            {totalItems > 9 ? "9+" : totalItems}
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

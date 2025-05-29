@@ -83,8 +83,19 @@ class CustomerAccount {
   // Cập nhật tài khoản khách hàng
   static async update(accountId, data) {
     try {
-      const {email, avatarId, avatarURL, fullName, phone, identification, address, sex, country } = data;
+      const {
+        email,
+        avatarId,
+        avatarURL,
+        fullName,
+        phone,
+        identification,
+        address,
+        sex,
+        country,
+      } = data;
       const account = await this.findById(accountId);
+
       handleDestroyCloudinary(account.AvatarId);
       const [result1] = await this.pool.query(
         `UPDATE TaiKhoanKH

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/use-auth";
 import { Link } from "react-router-dom";
-
+import { useToast } from "../../hooks/use-toast";
 import {
   Tabs,
   TabsContent,
@@ -20,6 +20,12 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { format } from "date-fns";
 import { Loader2, User } from "lucide-react";
+import {
+  getCustomerAccountById,
+  updateCustomerAccountById,
+} from "../../config/api";
+import defaultAvatar from "../../assets/avatar-default.svg";
+import EditProfileModal from "./EditProfile";
 
 const mockBookings = [
   // Booking confirmed - room
@@ -77,14 +83,29 @@ const mockBookings = [
 ];
 
 export default function ProfilePage() {
-  //   const { user } = useAuth();
-  const user = {
-    name: "Nguyen Van A",
-    email: "a@example.com",
-    phone: "0123456789",
-    isAdmin: false,
-  };
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [userInfor, setUserInfor] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!user || !user.id) return;
+      try {
+        const res = await getCustomerAccountById(user.id);
+
+        console.log(res);
+
+        setUserInfor(res);
+      } catch (err) {
+        console.error("Failed to fetch user");
+      }
+    };
+
+    fetchUser();
+  }, [user]);
+
   const [activeTab, setActiveTab] = useState("profile");
+  const [showModal, setShowModal] = useState(false);
 
   //   const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
   //     queryKey: ["/api/user/bookings"],
@@ -94,73 +115,145 @@ export default function ProfilePage() {
   const bookings = mockBookings;
   const isLoadingBookings = false;
 
-  //   if (!user) {
-  //     return (
-  //       <div className="container mx-auto py-20 px-4">
-  //         <div className="text-center">
-  //           <h1 className="text-3xl font-bold mb-4">Please Log In</h1>
-  //           <p className="mb-6">You need to be logged in to view your profile.</p>
-  //           <Link to="/auth">
-  //             <Button className="bg-black text-white">Log In</Button>
-  //           </Link>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
+  if (!user) {
+    return (
+      <div className="container mx-auto py-20 px-4">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Vui lòng đăng nhập</h1>
+          <p className="mb-6">Bạn cần đăng nhập để xem trang cá nhân.</p>
+          <Link to="/auth">
+            <Button className="bg-black text-white">Đăng nhập ở đây!</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSave = async (formData) => {
+    const data = new FormData();
+    for (const key in formData) {
+      if (formData[key]) data.append(key, formData[key]);
+    }
+
+    try {
+      await updateCustomerAccountById(user.id, data);
+
+      toast({
+        title: "Cập nhật thành công!",
+      });
+      setShowModal(false);
+      // Gọi API get lại thông tin nếu cần
+    } catch (error) {
+      console.error("Update failed:", error);
+
+      toast({
+        title: "Cập nhật thất bại. Vui lòng thử lại!",
+      });
+    }
+    // Cập nhật lại giao diện nếu cần
+  };
 
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="flex items-center mb-8">
-        <div className="bg-primary/10 p-3 rounded-full mr-4">
+        {/* <div className="bg-primary/10 p-3 rounded-full mr-4">
           <User className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-4xl font-bold">My Profile</h1>
+        <h1 className="text-4xl font-bold">Thông tin của tôi</h1> */}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-8">
-          <TabsTrigger value="profile">Profile Information</TabsTrigger>
-          <TabsTrigger value="bookings">Booking History</TabsTrigger>
+          <TabsTrigger value="profile">Thông tin tài khoản</TabsTrigger>
+          <TabsTrigger value="bookings">Lịch sử đặt hàng</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Your account details</CardDescription>
+              <CardTitle>Thông tin chi tiết</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Name
-                  </h3>
-                  <p className="text-lg">{user.name}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Họ và tên
+                    </h3>
+                    <p className="text-lg">
+                      {userInfor?.TenKH ? userInfor.TenKH : "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Email
+                    </h3>
+                    <p className="text-lg">{userInfor?.Email || "Không có"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Số điện thọai
+                    </h3>
+                    <p className="text-lg">{userInfor?.SDT || "Không có"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Loại tài khoản
+                    </h3>
+                    <p className="text-lg">
+                      {userInfor?.isAdmin ? "Quản trị viên" : "Khách hàng"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Số CCCD
+                    </h3>
+                    <p className="text-lg">
+                      {userInfor?.CCCD ? userInfor.CCCD : "Không có"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Giới tính
+                    </h3>
+                    <p className="text-lg">
+                      {userInfor?.GioiTinh || "Chưa xác định"}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Địa chỉ
+                    </h3>
+                    <p className="text-lg">{userInfor?.DiaChi || "Không có"}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Quốc tịch
+                    </h3>
+                    <p className="text-lg">
+                      {userInfor?.QuocTich || "Không có"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Email
-                  </h3>
-                  <p className="text-lg">{user.email}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Phone
-                  </h3>
-                  <p className="text-lg">{user.phone || "Not provided"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Account Type
-                  </h3>
-                  <p className="text-lg">
-                    {user.isAdmin ? "Administrator" : "Guest"}
-                  </p>
+                <div className="flex justify-center items-center">
+                  <img
+                    src={userInfor?.avatarUrl || defaultAvatar}
+                    alt="Avatar"
+                    className="w-40 h-40 rounded-full object-cover"
+                  />
                 </div>
               </div>
-
               <div className="pt-4">
-                <Button variant="outline">Edit Profile</Button>
+                <Button onClick={() => setShowModal(true)} variant="outline">
+                  Chỉnh sửa
+                </Button>
+                {showModal && (
+                  <EditProfileModal
+                    userData={userInfor}
+                    onClose={() => setShowModal(false)}
+                    onSave={handleSave}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

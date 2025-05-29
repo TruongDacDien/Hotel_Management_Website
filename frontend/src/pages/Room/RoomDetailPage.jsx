@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { mockRooms } from "../../mock/room";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "../../hooks/use-toast";
 import { useCart } from "../../hooks/use-cart";
 import { amenityIcons } from "../../constants/amenityIcons";
-import { Users, Calendar } from "lucide-react";
+import { Users, Calendar, CheckCircle } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -28,8 +28,8 @@ import {
 import { Separator } from "../../components/ui/separator";
 
 import { getRoomTypeById, getAmentitesRoomDetails } from "../../config/api";
-// import ReviewList from "../../components/reviews/ReviewList";
-// import ReviewForm from "../../components/reviews/ReviewForm";
+import ReviewList from "../../components/reviews/ReviewList";
+import ReviewForm from "../../components/reviews/ReviewForm";
 
 export default function RoomDetailPage() {
   const [amentites, setAmentites] = useState([]);
@@ -39,6 +39,7 @@ export default function RoomDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [reloadReviewKey, setReloadReviewKey] = useState(0);
 
   //   useEffect(() => {
   //     window.scrollTo(0, 0);
@@ -85,7 +86,6 @@ export default function RoomDetailPage() {
   if (isLoading) {
     return <RoomDetailSkeleton />;
   }
-  console.log(room.TenLoaiPhong);
 
   if (error || !room) {
     return (
@@ -212,28 +212,31 @@ export default function RoomDetailPage() {
               </div>
             </div>
 
-            {/* <div className="mb-8">
+            <div className="mb-8">
               <h2 className="text-2xl font-bold text-primary mb-4">
-                Guest Reviews
+                Đánh giá của khách hàng
               </h2>
-              <ReviewList roomId={parseInt(id)} />
+              <div className="grid-cols-1 w-full ">
+                <ReviewList roomId={parseInt(id)} key={reloadReviewKey} />
+              </div>
             </div>
 
             <div>
               <h2 className="text-2xl font-bold text-primary mb-4">
-                Write a Review
+                Viết đánh giá
               </h2>
               <ReviewForm
                 roomId={parseInt(id)}
                 onSuccess={() => {
                   toast({
-                    title: "Thank you for your review!",
+                    title: "Cảm ơn đánh giá của bạn!",
                     description:
-                      "Your feedback helps other guests make informed decisions.",
+                      "Đánh giá của bạn sẽ giúp cho các khách hàng khác biết thêm thông tin.",
                   });
+                  setReloadReviewKey((prev) => prev + 1);
                 }}
               />
-            </div> */}
+            </div>
           </div>
 
           <div className="lg:col-span-1">
@@ -242,6 +245,7 @@ export default function RoomDetailPage() {
               roomName={room?.TenLoaiPhong}
               price={room?.GiaNgay}
               setBookingSuccess={setBookingSuccess}
+              imageUrl={room.ImageURL}
             />
           </div>
         </div>
@@ -250,10 +254,10 @@ export default function RoomDetailPage() {
   );
 }
 
-function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
+function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
   const { toast } = useToast();
   const { addRoom } = useCart();
-  const navigate = useLocation();
+  const navigate = useNavigate();
 
   const form = useForm({
     // resolver: zodResolver(
@@ -277,7 +281,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
       name: "",
       email: "",
       phone: "",
-      checkIn: "",
+      checkIn: new Date().toISOString().split("T")[0],
       checkOut: "",
     },
   });
@@ -285,6 +289,8 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
   const bookingMutation = useMutation({
     mutationFn: async (data) => {
       // Instead of directly booking, we'll add this to the cart
+      console.log(data);
+
       return data;
     },
     onSuccess: (data) => {
@@ -294,13 +300,15 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
           id: roomId,
           name: roomName,
           price: price,
-          imageUrl:
-            document
-              .querySelector('img[alt="' + roomName + '"]')
-              ?.getAttribute("src") || "",
+          imageUrl: imageUrl,
         },
         data.checkIn,
-        data.checkOut
+        data.checkOut,
+        {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+        }
       );
 
       // Show success message
@@ -312,9 +320,9 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
       });
 
       // Option to navigate to cart
-      setTimeout(() => {
-        navigate("/cart");
-      }, 1500);
+      // setTimeout(() => {
+      //   navigate("/cart");
+      // }, 1500);
     },
     onError: (error) => {
       toast({
@@ -327,6 +335,13 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
   });
 
   function onSubmit(data) {
+    if (!data.name || !data.email || !data.checkIn || !data.checkOut) {
+      toast({
+        title: "Vui lòng điền đầy đủ thông tin!",
+        variant: "destructive",
+      });
+      return;
+    }
     bookingMutation.mutate(data);
   }
 
@@ -352,7 +367,7 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess }) {
             <div className="grid grid-cols-2 gap-4">
               <Button
                 className="w-full"
-                onClick={() => setBookingSuccess(false)}
+                onClick={() => navigate("/rooms")}
                 variant="outline"
               >
                 Đặt phòng khác

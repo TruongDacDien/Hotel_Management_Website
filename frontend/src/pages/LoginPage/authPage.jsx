@@ -295,15 +295,17 @@ function ForgotPasswordForm({
       setStep("verify");
       setIsLoading(false);
     } else if (step === "verify") {
+      setIsLoading(true);
       const res = await verifyCodeMutation.mutateAsync({
         email,
         verificationCode: data.code,
       });
       console.log(res);
-    
+
       if (res.success) {
         //toast({ title: "Mã đúng" });
         await sendResetPassMutation.mutateAsync(email);
+        setIsLoading(false);
         setStep("done");
       }
     }

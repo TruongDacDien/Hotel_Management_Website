@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
@@ -199,8 +199,8 @@ export default function ServiceBookingPage() {
               serviceId={parseInt(id)}
               serviceName={service.TenDV}
               price={service.Gia}
-              rooms={rooms || []}
               setBookingSuccess={setBookingSuccess}
+              imageUrl={service.ImageURL}
             />
           </div>
         </div>
@@ -213,10 +213,13 @@ function ServiceBookingForm({
   serviceId,
   serviceName,
   price,
-  rooms,
+
   setBookingSuccess,
+  imageUrl,
 }) {
   const { toast } = useToast();
+  const { addService } = useCart();
+  const navigate = useNavigate();
 
   const form = useForm({
     // resolver: zodResolver(bookingSchema),
@@ -224,8 +227,8 @@ function ServiceBookingForm({
       name: "",
       email: "",
       phone: "",
-      roomId: "",
-      date: "",
+
+      date: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -236,15 +239,21 @@ function ServiceBookingForm({
     },
     onSuccess: (data) => {
       // Add the service to cart
-      addService({
-        id: serviceId,
-        name: serviceName,
-        price: price,
-        imageUrl:
-          document
-            .querySelector('img[alt="' + serviceName + '"]')
-            ?.getAttribute("src") || "",
-      });
+      addService(
+        {
+          id: serviceId,
+          name: serviceName,
+          price: price,
+          imageUrl: imageUrl,
+
+          offeredDate: data.date,
+        },
+        {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+        }
+      );
 
       // Show success message
       setBookingSuccess(true);
@@ -255,9 +264,9 @@ function ServiceBookingForm({
       });
 
       // Option to navigate to cart
-      setTimeout(() => {
-        navigate("/cart");
-      }, 1500);
+      // setTimeout(() => {
+      //   navigate("/cart");
+      // }, 1500);
     },
     onError: (error) => {
       toast({
@@ -270,6 +279,8 @@ function ServiceBookingForm({
   });
 
   function onSubmit(data) {
+    console.log(data);
+
     bookingMutation.mutate(data);
   }
 
@@ -358,37 +369,6 @@ function ServiceBookingForm({
                       <FormControl>
                         <Input placeholder="+1 (123) 456-7890" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="roomId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Chọn phòng</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your room" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-white">
-                          {rooms.map((room) => (
-                            <SelectItem
-                              key={room.MaLoaiPhong}
-                              value={room.TenLoaiPhong.toString()}
-                            >
-                              {room.TenLoaiPhong}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
