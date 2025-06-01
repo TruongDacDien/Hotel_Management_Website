@@ -55,7 +55,7 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Allowed HTTP methods
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", // Allowed HTTP methods
     preflightContinue: false, // Do not forward OPTIONS requests
     optionsSuccessStatus: 204, // Return 204 for OPTIONS requests
   })

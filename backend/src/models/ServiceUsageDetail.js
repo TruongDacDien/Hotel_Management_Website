@@ -40,7 +40,8 @@ class ServiceUsageDetail {
         "INSERT INTO CT_SDDichVu (MaCTPT, MaKH, MaDV, SL, ThanhTien, NgayApDung) VALUES (?, ?, ?, ?, ?, ?)",
         [null, customerId, serviceId, quantity, totalMoney, offeredDate]
       );
-      return { MaCTSDDV: result.insertId, ...data };
+      const [serviceUsageDetailRow] = await this.pool.query("SELECT * FROM CT_SDDichVu WHERE MaCTSDDV = ?", [result.insertId]);
+      return serviceUsageDetailRow[0];
     } catch (error) {
       console.error("Error creating service usage detail:", error);
       throw new Error("Error creating service usage detail");

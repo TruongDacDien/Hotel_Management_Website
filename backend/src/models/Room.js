@@ -185,8 +185,11 @@ class Room {
             AND p.SoPhong NOT IN (
                 SELECT ct.SoPhong
                 FROM CT_PhieuThue ct
-                WHERE ((ct.NgayBD <= ? AND ct.NgayKT >= ?)) 
-                AND ct.TinhTrangThue NOT IN ('Đã thanh toán', 'Đã thanh toán online')
+                WHERE ((ct.NgayBD <= ? AND ct.NgayKT >= ?))
+                AND (
+                    ct.TinhTrangThue != 'Đã thanh toán' 
+                    OR ct.TinhTrangThue = 'Đã thanh toán online'
+                )
             )
             AND lp.MaLoaiPhong = ?
         `;

@@ -2,24 +2,112 @@ import expressAsyncHandler from "express-async-handler";
 import PaymentService from "../services/paymentService.js";
 import EmailController from "./emailController.js";
 import crypto from "crypto";
+import { v4 as uuidv4 } from 'uuid';
+import BookingService from "../services/bookingService.js";
 
 class PaymentController {
   createPaymentLink = expressAsyncHandler(async (req, res) => {
-    const { description, returnUrl, cancelUrl, amount, items } = req.body;
     const bookingData = req.bookingData; // Lấy từ middleware
-
     try {
+      // Gọi BookingService.customerOrder để xử lý đặt phòng và dịch vụ
+      const orderResult = await BookingService.customerOrder(bookingData);
+
+      // Lấy thông tin loại phòng và dịch vụ
+      const roomTypePromises = orderResult.roomResults.map(async (result) => {
+        if (result.roomTypeId) {
+          const roomType = await RoomTypeService.getById(result.roomTypeId);
+          return {
+            ...result,
+            TenLoaiPhong: roomType?.TenLoaiPhong || "Unknown",
+          };
+        }
+        return result;
+      });
+
+      const servicePromises = orderResult.serviceResults.map(async (result) => {
+        if (result.serviceId) {
+          const service = await ServiceService.getServiceById(result.serviceId);
+          return {
+            ...result,
+            TenDV: service?.TenDV || "Unknown",
+            Gia: service?.Gia || 0,
+          };
+        }
+        return result;
+      });
+
+      const enrichedRoomResults = await Promise.all(roomTypePromises);
+      const enrichedServiceResults = await Promise.all(servicePromises);
+
+      // Tạo danh sách items cho PayOS
+      const items = [];
+
+      // Thêm phòng vào items
+      enrichedRoomResults.forEach((result) => {
+        if (result.bookings && result.bookings.length > 0) {
+          result.bookings.forEach((booking) => {
+            if (booking.bookingDetail) {
+              items.push({
+                name: `${result.TenLoaiPhong} (${booking.bookingDetail.SoPhong})`,
+                quantity: 1, // Mỗi booking đại diện cho 1 phòng
+                price: parseFloat(booking.bookingDetail.TienPhong),
+              });
+            }
+          });
+        }
+      });
+
+      // Thêm dịch vụ vào items
+      enrichedServiceResults.forEach((result) => {
+        if (result.bookedServices > 0) {
+          items.push({
+            name: result.TenDV,
+            quantity: result.bookedServices,
+            price: parseFloat(result.Gia),
+          });
+        }
+      });
+
+      // Tính tổng tiền
+      const totalRoomMoney = enrichedRoomResults.reduce((sum, result) => {
+        return (
+          sum +
+          result.bookings.reduce((roomSum, booking) => {
+            return roomSum + (parseFloat(booking.bookingDetail?.TienPhong) || 0);
+          }, 0)
+        );
+      }, 0);
+
+      const totalRoomTax = (totalRoomMoney * 10) / 100;
+
+      const totalServiceMoney = enrichedServiceResults.reduce((sum, result) => {
+        return sum + (result.totalMoney || 0);
+      }, 0);
+
+      const totalServiceTax = (totalServiceMoney * 10) / 100;
+
+      const amount = Math.round(totalRoomMoney + totalRoomTax + totalServiceMoney + totalServiceTax);
+
+      //Thêm thuế vào items
+      items.push({
+        name: "Thuế VAT",
+        quantity: 1,
+        price: Math.round(totalRoomTax + totalServiceTax),
+      });
+
+      // Tạo payment link với PayOS
       const paymentLink = await PaymentService.createPaymentLink(
         {
-          orderCode: Number(String(new Date().getTime()).slice(-6)),
+          orderCode: uuidv4(),
           amount,
-          description,
+          description: "THANH TOAN KHACH SAN",
           items,
-          cancelUrl,
-          returnUrl,
+          cancelUrl: "http://localhost:5173/cart",
+          returnUrl: "http://localhost:5173/cart",
         },
         bookingData
       );
+
       return res.json({
         error: 0,
         message: "Success",
@@ -80,7 +168,7 @@ class PaymentController {
         const result = await EmailController.sendBookingConfirmation(
           { body: bookingData },
           res,
-          () => {}
+          () => { }
         );
         await PaymentService.deletePendingBooking(orderCode);
         return res.json({

@@ -143,11 +143,11 @@ class EmailController {
       !bookingData.fullName ||
       !bookingData.email ||
       !bookingData.phone ||
-      !bookingData.roomRequests.length
+      (bookingData.roomRequests.length === 0 && bookingData.serviceRequests.length === 0)
     ) {
       return res
         .status(400)
-        .json({ error: "Missing required fields or room requests" });
+        .json({ msg: "Missing required fields or room requests" });
     }
 
     // Gọi BookingService.customerorder để xử lý đặt phòng và dịch vụ 
@@ -157,7 +157,7 @@ class EmailController {
     const emailSent = await EmailService.sendEmailWithHTMLTemplate(
       bookingData.email,
       "Xác nhận đặt phòng và dịch vụ - The Royal Hotel",
-      result
+      { ...bookingData, ...result }
     );
 
     if (!emailSent) {

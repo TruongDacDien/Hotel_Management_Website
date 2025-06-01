@@ -130,22 +130,21 @@ export const getAmentitesRoomDetails = async () => {
 };
 
 export const createPayment = async ({
-  totalPrice,
-  filmShowId = null,
-  seatSelections = null,
-  promotionIDs = null,
-  ticketSelections = null,
-  additionalItemSelections = null,
-  pointUsage = null,
+  isOnline = null,
+  fullName = null,
+  email = null, phone = null,
+  roomRequests = [],
+  serviceRequests = [],
+  totalPrice = null
 }) => {
-  return await axios.post(`/payment`, {
-    totalPrice,
-    filmShowId,
-    seatSelections,
-    promotionIDs,
-    ticketSelections,
-    additionalItemSelections,
-    pointUsage,
+  return await axios.post(`/payment/create`, {
+    isOnline,
+    fullName,
+    email,
+    phone,
+    roomRequests,
+    serviceRequests,
+    totalPrice
   });
 };
 
