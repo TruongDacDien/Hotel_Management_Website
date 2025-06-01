@@ -87,20 +87,19 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [userInfor, setUserInfor] = useState(null);
 
+  const fetchUser = async () => {
+    if (!user || !user.id) return;
+    try {
+      const res = await getCustomerAccountById(user.id);
+
+      console.log(res);
+
+      setUserInfor(res);
+    } catch (err) {
+      console.error("Failed to fetch user");
+    }
+  };
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!user || !user.id) return;
-      try {
-        const res = await getCustomerAccountById(user.id);
-
-        console.log(res);
-
-        setUserInfor(res);
-      } catch (err) {
-        console.error("Failed to fetch user");
-      }
-    };
-
     fetchUser();
   }, [user]);
 
@@ -142,6 +141,7 @@ export default function ProfilePage() {
         title: "Cập nhật thành công!",
       });
       setShowModal(false);
+      fetchUser();
       // Gọi API get lại thông tin nếu cần
     } catch (error) {
       console.error("Update failed:", error);

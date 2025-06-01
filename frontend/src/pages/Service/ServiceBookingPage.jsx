@@ -27,6 +27,9 @@ import { Badge } from "../../components/ui/badge";
 import { Separator } from "../../components/ui/separator";
 import { Calendar, CheckCircle, ArrowRight } from "lucide-react";
 import { getServiceById, getAllRooms, getAllRoomTypes } from "../../config/api";
+import { useAuth } from "../../hooks/use-auth";
+import ReviewList from "../../components/reviews/ReviewList";
+import ReviewForm from "../../components/reviews/ReviewForm";
 
 export default function ServiceBookingPage() {
   const [rooms, setRooms] = useState([]);
@@ -37,6 +40,7 @@ export default function ServiceBookingPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [error, setError] = useState(null);
   const { toast } = useToast();
+  const [reloadReviewKey, setReloadReviewKey] = useState(0);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -192,6 +196,32 @@ export default function ServiceBookingPage() {
                 </ul>
               </div>
             </div>
+
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-primary mb-4 mt-4">
+                Đánh giá của khách hàng
+              </h2>
+              <div className="grid-cols-1 w-full ">
+                <ReviewList serviceId={parseInt(id)} key={reloadReviewKey} />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-primary mb-4">
+                Viết đánh giá
+              </h2>
+              <ReviewForm
+                serviceId={parseInt(id)}
+                onSuccess={() => {
+                  toast({
+                    title: "Cảm ơn đánh giá của bạn!",
+                    description:
+                      "Đánh giá của bạn sẽ giúp cho các khách hàng khác biết thêm thông tin.",
+                  });
+                  setReloadReviewKey((prev) => prev + 1);
+                }}
+              />
+            </div>
           </div>
 
           <div className="lg:col-span-1">
@@ -220,6 +250,7 @@ function ServiceBookingForm({
   const { toast } = useToast();
   const { addService } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const form = useForm({
     // resolver: zodResolver(bookingSchema),
@@ -231,6 +262,14 @@ function ServiceBookingForm({
       date: new Date().toISOString().split("T")[0],
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.setValue("name", user.name);
+      form.setValue("email", user.email);
+      form.setValue("phone", user.phone);
+    }
+  }, [user, form]);
 
   const bookingMutation = useMutation({
     mutationFn: async (data) => {
@@ -383,7 +422,11 @@ function ServiceBookingForm({
                       <FormControl>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2 text-neutral-500" />
-                          <Input type="date" {...field} />
+                          <input
+                            type="date"
+                            {...field}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md text-base"
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />

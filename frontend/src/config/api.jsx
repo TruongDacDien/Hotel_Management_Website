@@ -49,6 +49,10 @@ export const getRatingByServiceId = async (ratingId) => {
   return axios.get(`/ratingServices/${ratingId}`);
 };
 
+export const createRatingByService = async (data) => {
+  return axios.post("/ratingServices", { ...data });
+};
+
 export const getCustomerAccountById = async (Id) => {
   return axios.get(`/customerAccounts/${Id}`);
 };
@@ -67,6 +71,15 @@ export const updateCustomerAccountById = async (Id, data) => {
 export const getCustomerById = async (Id) => {
   return axios.get(`/customers/${Id}`);
 };
+
+export const createOrder = async (data) => {
+  return axios.post("/bookings/customerOrder", data);
+};
+
+export const sendBookingToEmail = async (data) => {
+  return axios.post("/email/send-booking-confirmation", data);
+};
+
 // export const updateUser = async (id, updateData) => {
 //   return axios.put(`/user/user/${id}`, { ...updateData });
 // };
