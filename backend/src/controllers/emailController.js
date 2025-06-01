@@ -1,10 +1,10 @@
 import expressAsyncHandler from "express-async-handler";
-import EmailService from "../services/emailService.js"
+import EmailService from "../services/emailService.js";
 import CustomerAccountService from "../services/customerAccountService.js";
+import BookingService from "../services/bookingService.js";
 import bcrypt from "bcrypt";
 
 class EmailController {
-
   sendConfirmCode = expressAsyncHandler(async (req, res, next) => {
     const { email } = req.body;
 
@@ -74,11 +74,13 @@ class EmailController {
       return password;
     };
 
-
     const newPassword = generateRandomPassword();
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     // Cập nhật mật khẩu mới
-    const update = await CustomerAccountService.findByIdAndUpdatePassword(user.MaTKKH, hashedPassword);
+    const update = await CustomerAccountService.findByIdAndUpdatePassword(
+      user.MaTKKH,
+      hashedPassword
+    );
 
     // Gửi email reset password
     const content = `
@@ -93,7 +95,7 @@ class EmailController {
       </body>
       </html>
       `;
-    await EmailService.sendEmail(email,"Reset Password", content);
+    await EmailService.sendEmail(email, "Reset Password", content);
 
     return res.status(200).json({
       msg: "Password reset successfully. Please check your email for the new password.",
@@ -137,15 +139,22 @@ class EmailController {
       serviceRequests: req.body.serviceRequests || [],
     };
 
-    if (!bookingData.fullName || !bookingData.email || !bookingData.phone || !bookingData.roomRequests.length) {
-      return res.status(400).json({ error: "Missing required fields or room requests" });
+    if (
+      !bookingData.fullName ||
+      !bookingData.email ||
+      !bookingData.phone ||
+      !bookingData.roomRequests.length
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Missing required fields or room requests" });
     }
 
     // Gửi email xác nhận
     const emailSent = await EmailService.sendEmailWithHTMLTemplate(
       bookingData.email,
       "Xác nhận đặt phòng và dịch vụ - The Royal Hotel",
-      { ...bookingData, ...result } // Kết hợp bookingData với result để có roomResults và serviceResults
+      { ...bookingData } // Kết hợp bookingData với result để có roomResults và serviceResults
     );
 
     if (!emailSent) {

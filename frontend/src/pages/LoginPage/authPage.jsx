@@ -170,7 +170,15 @@ function LoginForm({ loginMutation, onForgotPassword }) {
 }
 
 function RegisterForm({ registerMutation }) {
-  const form = useForm();
+  const form = useForm({
+    defaultValues: {
+      fullname: "",
+      username: "",
+      email: "",
+      phone: "",
+      password: "",
+    },
+  });
   const onSubmit = (data) => {
     console.log("Form data trước khi gửi:", data);
     registerMutation.mutate(data);
@@ -255,6 +263,11 @@ function RegisterForm({ registerMutation }) {
             <FormField
               control={form.control}
               name="confirmPassword"
+              rules={{
+                validate: (value) =>
+                  value === form.getValues("password") ||
+                  "Mật khẩu xác nhận không khớp",
+              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Xác nhận mật khẩu</FormLabel>

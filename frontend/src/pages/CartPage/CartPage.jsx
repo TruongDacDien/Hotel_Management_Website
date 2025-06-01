@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "../../lib/queryClient";
 import { useCart } from "../../hooks/use-cart";
 import { useToast } from "../../hooks/use-toast";
+import PaymentMethodModal from "../../components/PaymentMethodModal";
 
 import {
   Form,
@@ -40,33 +41,15 @@ import {
   Check,
 } from "lucide-react";
 import { Separator } from "../../components/ui/separator";
+import { createOrder, sendBookingToEmail } from "../../config/api";
 
 // Mock Data
-
 export default function CartPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { items, isLoaded, removeItem, updateQuantity, clearCart, totalPrice } =
     useCart();
-
-  console.log(items);
-  useEffect(() => {
-    const rawCart = localStorage.getItem("hotel-cart");
-    console.log("Cart in localStorage (raw):", rawCart);
-  }, []);
-
-  const handleQuantityChange = (id, quantity) => {
-    updateQuantity(id, quantity); // dùng hàm từ context
-  };
-
-  const handleRemove = (id) => {
-    removeItem(id); // dùng hàm từ context
-  };
-
-  const handleClearCart = () => {
-    clearCart();
-  };
-
   const form = useForm({
     defaultValues: {
       name: "",
@@ -74,17 +57,13 @@ export default function CartPage() {
       phone: "",
     },
   });
+  const [bookingComplete, setBookingComplete] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const onSubmit = (data) => {
-    toast({
-      title: "Mock submit",
-      description: JSON.stringify(data),
-    });
-  };
-
-  if (!isLoaded) {
-    return <div>Loading cart...</div>; // hoặc spinner
-  }
+  useEffect(() => {
+    const rawCart = localStorage.getItem("hotel-cart");
+    console.log("Cart in localStorage (raw):", rawCart);
+  }, []);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -104,136 +83,180 @@ export default function CartPage() {
     }
   }, [items, form]);
 
-  // const { toast } = useToast();
-  // const [bookingComplete, setBookingComplete] = useState(false);
+  const handleQuantityChange = (id, quantity) => {
+    updateQuantity(id, quantity); // dùng hàm từ context
+  };
 
-  // const form = useForm({
-  //   defaultValues: {
-  //     name: "",
-  //     email: "",
-  //     phone: "",
-  //   },
-  // });
+  const handleRemove = (id) => {
+    removeItem(id); // dùng hàm từ context
+  };
 
-  //   const prepareBookingData = (formData) => {
-  //     const bookings = items.map((item) => {
-  //       if (item.type === "room") {
-  //         return {
-  //           name: formData.name,
-  //           email: formData.email,
-  //           phone: formData.phone || null,
-  //           roomId: item.roomId,
-  //           checkIn: item.checkIn,
-  //           checkOut: item.checkOut,
-  //           quantity: item.quantity,
-  //         };
-  //       } else {
-  //         return {
-  //           name: formData.name,
-  //           email: formData.email,
-  //           phone: formData.phone || null,
-  //           serviceId: item.serviceId,
-  //           quantity: item.quantity,
-  //         };
-  //       }
-  //     });
-  //     return { bookings };
-  //   };
+  const handleClearCart = () => {
+    clearCart();
+  };
 
-  //   const bookingMutation = useMutation({
-  //     mutationFn: async (data) => {
-  //       const bookingData = prepareBookingData(data);
-  //       const res = await apiRequest("POST", "/api/bookings/batch", bookingData);
-  //       return res.json();
-  //     },
-  //     onSuccess: () => {
-  //       setBookingComplete(true);
-  //       clearCart();
-  //       toast({
-  //         title: "Booking Confirmed!",
-  //         description: "Your booking has been successfully processed.",
-  //       });
-  //     },
-  //     onError: (error) => {
-  //       toast({
-  //         title: "Booking Failed",
-  //         description:
-  //           error.message || "Failed to process booking. Please try again.",
-  //         variant: "destructive",
-  //       });
-  //     },
-  //   });
+  const prepareBookingData = (formData) => {
+    // Tách items thành roomRequests và serviceRequests
+    const roomRequests = items
+      .filter((item) => item.type === "room")
+      .map((item) => ({
+        roomTypeId: item.roomId, // hoặc item.roomTypeId nếu đúng
+        numberOfRooms: item.quantity,
+        startDay: item.checkIn,
+        endDay: item.checkOut,
+      }));
+    const serviceRequests = items
+      .filter((item) => item.type === "service")
+      .map((item) => ({
+        serviceId: item.serviceId,
+        quantity: item.quantity,
+        offeredDate: item.offeredDate,
+      }));
+    return {
+      fullName: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      roomRequests,
+      serviceRequests,
+    };
+  };
 
-  //   const onSubmit = (data) => {
-  //     if (!data.name || data.name.length < 2) {
-  //       form.setError("name", {
-  //         type: "manual",
-  //         message: "Name must be at least 2 characters",
-  //       });
-  //       return;
-  //     }
-  //     if (!data.email || !/\S+@\S+\.\S+/.test(data.email)) {
-  //       form.setError("email", {
-  //         type: "manual",
-  //         message: "Please enter a valid email address",
-  //       });
-  //       return;
-  //     }
-  //     bookingMutation.mutate(data);
-  //   };
+  const bookingMutation = useMutation({
+    mutationFn: async (data) => {
+      const bookingData = prepareBookingData(data);
+      console.log("Booking data prepared:", bookingData);
+      const res = await createOrder(bookingData);
+      return res.data;
+    },
+    onSuccess: async (_, variables) => {
+      setBookingComplete(true);
+      clearCart();
+      toast({
+        title: "Đặt chỗ thành công!",
+        // description: "Your booking has been successfully processed.",
+      });
+      try {
+        // Gửi email xác nhận booking
+        const bookingData = prepareBookingData(variables);
+        await sendBookingToEmail(bookingData);
+      } catch (e) {
+        // Có thể log hoặc toast lỗi gửi email nếu muốn
+        console.error("Gửi email xác nhận thất bại", e);
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Đặt chỗ thất bại",
+        // description:
+        //   error.message || "Failed to process booking. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  //   if (items.length === 0 && !bookingComplete) {
-  //     return (
-  //       <div className="container mx-auto px-4 py-32 text-center">
-  //         <ShoppingCart className="w-16 h-16 mx-auto text-neutral-300 mb-6" />
-  //         <h1 className="text-3xl font-bold text-primary mb-4">
-  //           Your Cart is Empty
-  //         </h1>
-  //         <p className="text-neutral-600 mb-8">
-  //           You haven't added any rooms or services to your cart yet.
-  //         </p>
-  //         <div className="flex flex-col sm:flex-row justify-center gap-4">
-  //           <Button asChild className="px-8">
-  //             <Link to="/rooms">Browse Rooms</Link>
-  //           </Button>
-  //           <Button asChild variant="outline" className="px-8">
-  //             <Link to="/services">Explore Services</Link>
-  //           </Button>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
+  const payosMutation = useMutation({
+    mutationFn: async (data) => {
+      // Chuẩn bị dữ liệu gửi lên PayOS
+      const bookingData = prepareBookingData(data);
+      // Gửi thêm tổng tiền (đã gồm thuế)
+      const payload = {
+        ...bookingData,
+        totalAmount: Math.round(totalPrice * 1.1),
+      };
+      // Gọi API PayOS
+      const res = await apiRequest("POST", "/api/payments/create", payload);
+      const result = await res.json();
+      if (result && result.checkoutUrl) {
+        window.location.href = result.checkoutUrl; // Redirect sang PayOS
+      } else {
+        throw new Error(result?.message || "Không lấy được link thanh toán");
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Thanh toán thất bại",
+        description: error.message || "Không thể tạo link thanh toán.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  //   if (bookingComplete) {
-  //     return (
-  //       <div className="container mx-auto px-4 py-32 max-w-2xl">
-  //         <Card>
-  //           <CardHeader className="pb-4 text-center">
-  //             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-  //               <Check className="w-10 h-10 text-green-600" />
-  //             </div>
-  //             <CardTitle className="text-2xl text-primary">
-  //               Booking Confirmed!
-  //             </CardTitle>
-  //           </CardHeader>
-  //           <CardContent className="text-center pb-6">
-  //             <p className="text-neutral-700 mb-6">
-  //               Thank you for your booking with Elysian Retreat. A confirmation
-  //               email has been sent with all your booking details.
-  //             </p>
-  //             <div className="flex justify-center space-x-4">
-  //               <Button asChild>
-  //                 <Link to="/">Return to Home</Link>
-  //               </Button>
-  //               <Button asChild variant="outline">
-  //                 <Link to="/rooms">Browse More Rooms</Link>
-  //               </Button>
-  //             </div>
-  //           </CardContent>
-  //         </Card>
-  //       </div>
-  //     );
-  //   }
+  const onSubmit = (data) => {
+    if (!data.name || data.name.length < 2) {
+      form.setError("name", {
+        type: "manual",
+        message: "Name must be at least 2 characters",
+      });
+      return;
+    }
+    if (!data.email || !/\S+@\S+\.\S+/.test(data.email)) {
+      form.setError("email", {
+        type: "manual",
+        message: "Please enter a valid email address",
+      });
+      return;
+    }
+    bookingMutation.mutate(data);
+  };
+
+  if (!isLoaded) {
+    return <div>Loading cart...</div>; // hoặc spinner
+  }
+
+  if (items.length === 0 && !bookingComplete) {
+    return (
+      <div className="container mx-auto px-4 py-32 text-center">
+        <ShoppingCart className="w-16 h-16 mx-auto text-neutral-300 mb-6" />
+        <h1 className="text-3xl font-bold text-primary mb-4">
+          Giỏ hàng trống!
+        </h1>
+        <p className="text-neutral-600 mb-8">
+          Bạn chưa có mục nào trong giỏ hàng của mình. Hãy thêm phòng hoặc dịch
+          vụ để tiếp tục đặt chỗ.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button asChild className="px-8">
+            <Link to="/rooms">Xem phòng</Link>
+          </Button>
+          <Button asChild variant="outline" className="px-8">
+            <Link to="/services">Khám phá dịch vụ</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (bookingComplete) {
+    return (
+      <div className="container mx-auto px-4 py-32 max-w-2xl">
+        <Card>
+          <CardHeader className="pb-4 text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Check className="w-10 h-10 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-primary">
+              Đặt chỗ thành công!
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center pb-6">
+            <p className="text-neutral-700 mb-6">
+              Cảm ơn bạn đã đặt chỗ tại khách sạn của chúng tôi! Chúng tôi đã
+              nhận được thông tin đặt chỗ của bạn và gửi thông tin qua email của
+              bạn.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Button asChild>
+                <Link to="/">Return to Home</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/rooms">Browse More Rooms</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-32">
@@ -394,7 +417,26 @@ export default function CartPage() {
             <CardContent>
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit(onSubmit)}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    form.handleSubmit((data) => {
+                      if (!data.name || data.name.length < 2) {
+                        form.setError("name", {
+                          type: "manual",
+                          message: "Name must be at least 2 characters",
+                        });
+                        return;
+                      }
+                      if (!data.email || !/\S+@\S+\.\S+/.test(data.email)) {
+                        form.setError("email", {
+                          type: "manual",
+                          message: "Please enter a valid email address",
+                        });
+                        return;
+                      }
+                      setShowPaymentModal(true);
+                    })(e);
+                  }}
                   className="space-y-4"
                 >
                   <FormField
@@ -467,23 +509,33 @@ export default function CartPage() {
                       </span>
                     </div>
                   </div>
-                  {/* <Button
-                    type="submit"
-                    className="w-full mt-6"
-                    disabled={bookingMutation.isPending}
-                  >
-                    {bookingMutation.isPending
-                      ? "Processing..."
-                      : "Complete Booking"}
-                  </Button> */}
-                  <Button
-                    type="submit"
-                    className="w-full mt-6 bg-black text-white"
-                    // sửa dòng này:
-                    disabled={false} // hoặc tạo biến giả để thay thế bookingMutation
-                  >
-                    {"Hoàn tất đặt chỗ"}
-                  </Button>
+                  <div className="flex flex-col gap-3 mt-6">
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      variant="custom"
+                      disabled={
+                        bookingMutation.isPending || payosMutation.isPending
+                      }
+                    >
+                      Hoàn tất đặt chỗ
+                    </Button>
+                  </div>
+                  <PaymentMethodModal
+                    open={showPaymentModal}
+                    loading={
+                      bookingMutation.isPending || payosMutation.isPending
+                    }
+                    onClose={() => setShowPaymentModal(false)}
+                    onDirect={() => {
+                      setShowPaymentModal(false);
+                      form.handleSubmit(onSubmit)();
+                    }}
+                    onPayOS={() => {
+                      setShowPaymentModal(false);
+                      form.handleSubmit((data) => payosMutation.mutate(data))();
+                    }}
+                  />
                 </form>
               </Form>
             </CardContent>

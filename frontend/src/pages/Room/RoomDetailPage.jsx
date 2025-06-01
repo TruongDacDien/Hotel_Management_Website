@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { mockRooms } from "../../mock/room";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +30,7 @@ import { Separator } from "../../components/ui/separator";
 import { getRoomTypeById, getAmentitesRoomDetails } from "../../config/api";
 import ReviewList from "../../components/reviews/ReviewList";
 import ReviewForm from "../../components/reviews/ReviewForm";
+import { useAuth } from "../../hooks/use-auth";
 
 export default function RoomDetailPage() {
   const [amentites, setAmentites] = useState([]);
@@ -258,6 +259,8 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
   const { toast } = useToast();
   const { addRoom } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  console.log(user);
 
   const form = useForm({
     // resolver: zodResolver(
@@ -286,6 +289,14 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
     },
   });
 
+  useEffect(() => {
+    if (user) {
+      form.setValue("name", user.name);
+      form.setValue("email", user.email);
+      form.setValue("phone", user.phone);
+    }
+  }, [user, form]);
+
   const bookingMutation = useMutation({
     mutationFn: async (data) => {
       // Instead of directly booking, we'll add this to the cart
@@ -294,12 +305,19 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
       return data;
     },
     onSuccess: (data) => {
+      const checkInDate = new Date(data.checkIn);
+      const checkOutDate = new Date(data.checkOut);
+      const numberOfNights = Math.ceil(
+        (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)
+      );
+
+      const totalPrice = numberOfNights * price;
       // Add the room to cart with chosen dates
       addRoom(
         {
           id: roomId,
           name: roomName,
-          price: price,
+          price: totalPrice,
           imageUrl: imageUrl,
         },
         data.checkIn,
@@ -314,9 +332,9 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
       // Show success message
       setBookingSuccess(true);
       toast({
-        title: "Added to Cart!",
+        title: "Đặt phòng thành công!",
         description:
-          "Room has been added to your cart. You can review your booking there.",
+          "Phòng đã được bạn đặt thành công. Bạn có thể vào giỏ hàng để xem.",
       });
 
       // Option to navigate to cart
@@ -326,9 +344,9 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
     },
     onError: (error) => {
       toast({
-        title: "Failed to Add to Cart",
-        description:
-          error.message || "Failed to add room to cart. Please try again.",
+        title: "Đặt phòng thất bại",
+        // description:
+        //   error.message || "Failed to add room to cart. Please try again.",
         variant: "destructive",
       });
     },
@@ -448,7 +466,11 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
                         <FormControl>
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-2 text-neutral-500" />
-                            <Input type="date" {...field} />
+                            <input
+                              type="date"
+                              {...field}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md text-base"
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -465,7 +487,11 @@ function BookingForm({ roomId, roomName, price, setBookingSuccess, imageUrl }) {
                         <FormControl>
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-2 text-neutral-500" />
-                            <Input type="date" {...field} />
+                            <input
+                              type="date"
+                              {...field}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md text-base"
+                            />
                           </div>
                         </FormControl>
                         <FormMessage />

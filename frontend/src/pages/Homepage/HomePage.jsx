@@ -5,6 +5,7 @@ import ServicesList from "../../components/home/ServicesList";
 import Amenities from "../../components/home/Amentities";
 import Gallery from "../../components/home/Gallery";
 import Testimonials from "../../components/home/Testimonials";
+import Chatbot from "../../components/chatbot/Chatbot";
 
 import { useEffect } from "react";
 
@@ -42,6 +43,7 @@ export default function HomePage() {
         <Amenities />
         <Gallery />
         <Testimonials />
+        <Chatbot />
       </div>
     </>
   );

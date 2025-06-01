@@ -26,9 +26,9 @@ export default function ReviewList({ roomId, serviceId }) {
   const fetchReviews = async () => {
     try {
       let response;
-      if (roomId) {
+      if (roomId != null) {
         response = await getRatingByRoomId(roomId);
-      } else if (serviceId) {
+      } else if (serviceId != null) {
         response = await getRatingByServiceId(serviceId);
       } else {
         // Nếu không có roomId hoặc serviceId, không cần gọi
@@ -37,7 +37,9 @@ export default function ReviewList({ roomId, serviceId }) {
         return;
       }
 
-      setReviews(response);
+      const result = Array.isArray(response) ? response : [response];
+
+      setReviews(result);
     } catch (err) {
       setError(err);
     } finally {
@@ -47,7 +49,6 @@ export default function ReviewList({ roomId, serviceId }) {
 
   useEffect(() => {
     fetchReviews();
-    console.log(reviews);
   }, [roomId, serviceId]);
 
   if (loading) {
@@ -81,10 +82,7 @@ export default function ReviewList({ roomId, serviceId }) {
         Đánh giá ({reviews.length})
       </h3>
       <div className="relative w-full  mb-12">
-        <Carousel
-          opts={{ align: "start", loop: true }}
-          className="w-full  border border-red-500"
-        >
+        <Carousel opts={{ align: "start", loop: true }} className="w-full  ">
           <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
             <CarouselPrevious className="h-10 w-10 rounded-full shadow-md bg-white/80 hover:bg-white" />
           </div>

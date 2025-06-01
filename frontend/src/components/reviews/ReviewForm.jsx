@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Stars } from "./Stars";
-import { createRatingByRoom } from "../../config/api";
+import { createRatingByRoom, createRatingByService } from "../../config/api";
 
 const formSchema = z.object({
   content: z.string().min(10, "Nội dung phải tối thiểu 10 kí tự"),
@@ -51,20 +51,33 @@ export default function ReviewForm({ roomId, serviceId, onSuccess }) {
   });
 
   const onSubmit = async (data) => {
-    console.log(user);
+    const isRoomReview = !!roomId;
+    const isServiceReview = !!serviceId;
 
     const reviewData = {
-      MaLoaiPhong: roomId,
       MaTKKH: user?.id,
       SoSao: selectedRating,
       NoiDung: data.content,
     };
 
+    if (isRoomReview) {
+      reviewData.MaLoaiPhong = roomId;
+    }
+
+    if (isServiceReview) {
+      reviewData.MaDV = serviceId;
+    }
     try {
       setIsSubmitting(true);
       console.log(reviewData);
 
-      const res = await createRatingByRoom(reviewData);
+      if (isRoomReview) {
+        await createRatingByRoom(reviewData);
+      } else if (isServiceReview) {
+        await createRatingByService(reviewData);
+      } else {
+        throw new Error("Thiếu roomId hoặc serviceId.");
+      }
 
       form.reset();
       setSelectedRating(5);
