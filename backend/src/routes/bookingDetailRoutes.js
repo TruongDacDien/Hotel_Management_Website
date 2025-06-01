@@ -6,7 +6,8 @@ const router = express.Router();
 router.get('/', bookingDetailController.getAll);
 router.get('/:bookingId/:roomId', bookingDetailController.getById);
 router.post('/', bookingDetailController.create);
-router.put('/:bookingId/:roomId', bookingDetailController.update);
+router.put('/checkIn', bookingDetailController.updateCheckIn);
+router.put('/checkOut', bookingDetailController.updateCheckOut);
 router.delete('/:bookingId/:roomId', bookingDetailController.delete);
 
 export default router;

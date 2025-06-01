@@ -135,8 +135,8 @@ class EmailController {
       fullName: req.body.fullName,
       email: req.body.email,
       phone: req.body.phone,
-      roomRequests: req.body.roomRequests || [],
-      serviceRequests: req.body.serviceRequests || [],
+      roomRequests: req.body.roomRequests || [], // Mảng yêu cầu: [{ roomTypeId, numberOfRooms, startDay, endDay }, ...]
+      serviceRequests: req.body.serviceRequests || [] // Mảng yêu cầu: [{ serviceId, quantity, offeredDate }, ...]
     };
 
     if (
@@ -150,11 +150,14 @@ class EmailController {
         .json({ error: "Missing required fields or room requests" });
     }
 
+    // Gọi BookingService.customerorder để xử lý đặt phòng và dịch vụ 
+    const result = await BookingService.customerOrder(bookingData);
+
     // Gửi email xác nhận
     const emailSent = await EmailService.sendEmailWithHTMLTemplate(
       bookingData.email,
       "Xác nhận đặt phòng và dịch vụ - The Royal Hotel",
-      { ...bookingData } // Kết hợp bookingData với result để có roomResults và serviceResults
+      result
     );
 
     if (!emailSent) {

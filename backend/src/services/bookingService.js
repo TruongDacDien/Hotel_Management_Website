@@ -3,6 +3,7 @@ import RoomService from "./roomService.js";
 import CustomerAccountService from "./customerAccountService.js";
 import ServiceService from "./serviceService.js";
 import ServiceUsageDetailService from "./serviceUsageDetailService.js";
+import BookingDetailService from "./bookingDetailService.js";
 
 class BookingService {
     static async getAll() {
@@ -107,6 +108,12 @@ class BookingService {
             });
         }
 
+        for (const roomResult of roomResults) {
+            for (const booking of roomResult.bookings) {
+                await BookingDetailService.updateStatus(booking.MaCTPT, "Đã thanh toán online");
+            }
+        }
+
         // Xử lý từng yêu cầu đặt dịch vụ
         for (const request of serviceRequests) {
             const { serviceId, quantity, offeredDate } = request;
@@ -195,6 +202,10 @@ class BookingService {
         }
 
         return response;
+    }
+
+    static async getAllCustomerOrder(customerId) {
+        return await Booking.getAllCustomerOrder(customerId);
     }
 }
 

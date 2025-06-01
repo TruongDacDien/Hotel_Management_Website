@@ -18,9 +18,25 @@ class BookingDetailService {
     return await BookingDetail.create(data);
   }
 
-  static async update(bookingId, roomId, data) {
-    await this.getById(bookingId, roomId); // Check existence
-    return await BookingDetail.update(bookingId, roomId, data);
+  static async updateCheckIn(bookingDetailId, text) {
+    if (!bookingDetailId || !text) {
+      throw new Error('Missing data');
+    }
+    return await BookingDetail.updateCheckIn(bookingDetailId, text);
+  }
+
+  static async updateCheckOut(bookingDetailId, text) {
+    if (!bookingDetailId || !text) {
+      throw new Error('Missing data');
+    }
+    return await BookingDetail.updateCheckOut(bookingDetailId, text);
+  }
+
+  static async updateStatus(bookingDetailId, status) {
+    if (!bookingDetailId || !status) {
+      throw new Error('Missing data');
+    }
+    return await BookingDetail.updateStatus(bookingDetailId, status);
   }
 
   static async delete(bookingId, roomId) {

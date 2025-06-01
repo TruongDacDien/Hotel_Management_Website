@@ -117,6 +117,31 @@ class Booking {
             throw new Error("Error soft deleting booking");
         }
     }
+
+    static async getAllCustomerOrder(customerId) {
+        try {
+            const [customerBookings] = await this.pool.query(
+                `SELECT * 
+                 FROM PhieuThue PT, CT_PhieuThue CTPT 
+                 WHERE CTPT.MaPhieuThue = PT.MaPhieuThue AND IsDeleted = 0 AND PT.MaKH = ?`,
+                [customerId]
+            );
+            const [customerServices] = await this.pool.query(
+                `SELECT * 
+                 FROM CT_SDDichVu 
+                 WHERE MaKH = ?`,
+                [customerId]
+            );
+            return {
+                customerId: customerId,
+                bookings: customerBookings,
+                services: customerServices
+            };
+        } catch (error) {
+            console.error(`Error get booking with customer account ID ${customerId}:`, error);
+            throw new Error("Error get booking with customer account ID");
+        }
+    }
 }
 
 export default Booking;

@@ -50,14 +50,49 @@ class BookingDetail {
   }
 
   // Update a booking detail
-  static async update(bookingId, roomId, data) {
+  static async updateCheckIn(bookingDetailId, text) {
     try {
-      const { checkInDate, checkOutDate, price } = data;
       const [result] = await this.pool.query(
         `UPDATE CT_PhieuThue
-                 SET NgayNhanPhong = ?, NgayTraPhong = ?, DonGia = ?
-                 WHERE MaPhieu = ? AND MaPhong = ? AND IsDeleted = 0`,
-        [checkInDate, checkOutDate, price, bookingId, roomId]
+                 SET NoiDungCheckIn = ? AND ThoiDiemCheckIn = NOW()
+                 WHERE MaCTPT = ?`,
+        [text, bookingDetailId]
+      );
+      if (result.affectedRows === 0) {
+        throw new Error("Booking detail not found or not updated");
+      }
+      return result
+    } catch (error) {
+      console.error(`Error updating booking detail with ID ${bookingId} and room ID ${roomId}:`, error);
+      throw new Error("Error updating booking detail");
+    }
+  }
+
+  static async updateCheckOut(bookingDetailId, text) {
+    try {
+      const [result] = await this.pool.query(
+        `UPDATE CT_PhieuThue
+                 SET NoiDungCheckOut = ? AND ThoiDiemCheckOut = NOW()
+                 WHERE MaCTPT = ?`,
+        [text, bookingDetailId]
+      );
+      if (result.affectedRows === 0) {
+        throw new Error("Booking detail not found or not updated");
+      }
+      return result
+    } catch (error) {
+      console.error(`Error updating booking detail with ID ${bookingId} and room ID ${roomId}:`, error);
+      throw new Error("Error updating booking detail");
+    }
+  }
+
+  static async updateStatus(bookingDetailId, status) {
+    try {
+      const [result] = await this.pool.query(
+        `UPDATE CT_PhieuThue
+                 SET TinhTrangThue = ?
+                 WHERE MaCTPT = ?`,
+        [status, bookingDetailId]
       );
       if (result.affectedRows === 0) {
         throw new Error("Booking detail not found or not updated");

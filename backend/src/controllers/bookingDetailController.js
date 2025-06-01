@@ -18,9 +18,21 @@ class BookingDetailController {
     res.status(201).json(newItem);
   });
 
-  update = expressAsyncHandler(async (req, res) => {
-    const { bookingId, roomId } = req.params;
-    const updated = await BookingDetailService.update(bookingId, roomId, req.body);
+  updateCheckIn = expressAsyncHandler(async (req, res) => {
+    const { bookingDetailId, text } = req.body;
+    const updated = await BookingDetailService.updateCheckIn(bookingDetailId, text);
+    res.json(updated);
+  });
+
+  updateCheckOut = expressAsyncHandler(async (req, res) => {
+    const { bookingDetailId, text } = req.body;
+    const updated = await BookingDetailService.updateCheckOut(bookingDetailId, text);
+    res.json(updated);
+  });
+
+  updateStatus = expressAsyncHandler(async (req, res) => {
+    const { bookingDetailId, status } = req.body;
+    const updated = await BookingDetailService.updateStatus(bookingDetailId, status);
     res.json(updated);
   });
 
