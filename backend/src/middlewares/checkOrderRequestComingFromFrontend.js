@@ -1,19 +1,19 @@
 import expressAsyncHandler from "express-async-handler";
-import RoomTypeService from "../services/roomTypeService.js"; // Giả định để lấy giá phòng
-import ServiceService from "../services/serviceService.js"; // Giả định để lấy giá dịch vụ
+import RoomTypeService from "../services/roomTypeService.js";
+import ServiceService from "../services/serviceService.js";
 
 export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (req, res, next) => {
-  const { roomUsed, serviceUsed, totalPrice, fullName, email, phone } = req.body;
+  const { fullName, email, phone, roomRequests = [], serviceRequests = [], totalPrice } = req.body;
 
-  // Kiểm tra các trường bắt buộc
-  if (!roomUsed || !Array.isArray(roomUsed) || !fullName || !email || !phone) {
+  // Validate required fields
+  if (!fullName || !email || !phone || !roomRequests || !Array.isArray(roomRequests)) {
     return res.status(400).json({
       error: -1,
-      message: "Missing required fields: roomUsed, fullName, email, or phone",
+      message: "Missing required fields: fullName, email, phone, or roomRequests",
     });
   }
 
-  // Kiểm tra email hợp lệ
+  // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
@@ -22,7 +22,7 @@ export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (re
     });
   }
 
-  // Kiểm tra phone hợp lệ (giả định số điện thoại Việt Nam)
+  // Validate phone format (assuming Vietnamese phone number)
   const phoneRegex = /^[0-9]{10,11}$/;
   if (!phoneRegex.test(phone)) {
     return res.status(400).json({
@@ -31,24 +31,7 @@ export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (re
     });
   }
 
-  // Chuyển đổi roomUsed thành roomRequests
-  const roomRequests = roomUsed.map((room) => ({
-    roomTypeId: room.roomTypeId,
-    numberOfRooms: room.quantity || 1,
-    startDay: room.startDay,
-    endDay: room.endDay,
-  }));
-
-  // Chuyển đổi serviceUsed thành serviceRequests
-  const serviceRequests = serviceUsed && Array.isArray(serviceUsed)
-    ? serviceUsed.map((service) => ({
-        serviceId: service.serviceId,
-        quantity: service.quantity || 1,
-        offeredDate: service.offeredDate,
-      }))
-    : [];
-
-  // Kiểm tra dữ liệu roomRequests
+  // Validate roomRequests
   for (const room of roomRequests) {
     if (!room.roomTypeId || !room.numberOfRooms || !room.startDay || !room.endDay) {
       return res.status(400).json({
@@ -56,7 +39,7 @@ export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (re
         message: "Invalid room request: missing roomTypeId, numberOfRooms, startDay, or endDay",
       });
     }
-    // Kiểm tra ngày hợp lệ
+    // Validate dates
     const start = new Date(room.startDay);
     const end = new Date(room.endDay);
     if (isNaN(start) || isNaN(end) || start >= end) {
@@ -67,20 +50,22 @@ export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (re
     }
   }
 
-  // Kiểm tra dữ liệu serviceRequests
-  for (const service of serviceRequests) {
-    if (!service.serviceId || !service.quantity || !service.offeredDate) {
-      return res.status(400).json({
-        error: -1,
-        message: "Invalid service request: missing serviceId, quantity, or offeredDate",
-      });
+  // Validate serviceRequests
+  if (serviceRequests && Array.isArray(serviceRequests)) {
+    for (const service of serviceRequests) {
+      if (!service.serviceId || !service.quantity || !service.offeredDate) {
+        return res.status(400).json({
+          error: -1,
+          message: "Invalid service request: missing serviceId, quantity, or offeredDate",
+        });
+      }
     }
   }
 
-  // Tính tổng tiền từ roomUsed và serviceUsed
+  // Calculate total price
   let calculatedTotalPrice = 0;
 
-  // Tính giá phòng
+  // Calculate room prices
   for (const room of roomRequests) {
     const roomType = await RoomTypeService.getById(room.roomTypeId);
     if (!roomType) {
@@ -95,27 +80,29 @@ export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (re
     calculatedTotalPrice += roomType.GiaNgay * diffInDays * room.numberOfRooms;
   }
 
-  // Tính giá dịch vụ
-  for (const service of serviceRequests) {
-    const serviceInfo = await ServiceService.getById(service.serviceId);
-    if (!serviceInfo) {
-      return res.status(400).json({
-        error: -1,
-        message: `Invalid service ID: ${service.serviceId}`,
-      });
+  // Calculate service prices
+  if (serviceRequests && Array.isArray(serviceRequests)) {
+    for (const service of serviceRequests) {
+      const serviceInfo = await ServiceService.getById(service.serviceId);
+      if (!serviceInfo) {
+        return res.status(400).json({
+          error: -1,
+          message: `Invalid service ID: ${service.serviceId}`,
+        });
+      }
+      calculatedTotalPrice += serviceInfo.Gia * service.quantity;
     }
-    calculatedTotalPrice += serviceInfo.Gia * service.quantity;
   }
 
-  // So sánh totalPrice với giá tính được
-  if (Math.abs(calculatedTotalPrice - totalPrice) > 100) { // Cho phép sai số nhỏ
+  // Compare calculated total price with provided totalPrice
+  if (totalPrice === undefined || Math.abs(calculatedTotalPrice - totalPrice) > 100) {
     return res.status(400).json({
       error: -1,
       message: "Total price does not match calculated price",
     });
   }
 
-  // Gắn bookingData vào req để sử dụng trong createPaymentLink
+  // Attach bookingData to req for use in createPaymentLink
   req.bookingData = {
     fullName,
     email,
