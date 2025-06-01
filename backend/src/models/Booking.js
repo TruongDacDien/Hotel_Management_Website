@@ -50,36 +50,52 @@ class Booking {
     }
 
     static async customerOrder(customerId, selectedRoom, numberOfCustomers, bookingData) {
-        const connection = await this.pool.getConnection(); // Lấy kết nối từ pool
+        const connection = await this.pool.getConnection();
         try {
-            await connection.beginTransaction(); // Bắt đầu giao dịch
+            await connection.beginTransaction();
+
+            // Bước 1: Thêm phiếu thuê
             const [bookingResult] = await connection.query(
                 "INSERT INTO PhieuThue (MaKH, NgayLapPhieu, MaNV, IsDeleted) VALUES (?, NOW(), 1, 0)",
                 [customerId]
             );
             const bookingId = bookingResult.insertId;
 
+            // Bước 2: Tính toán tiền phòng
             const { startDay, endDay, roomTypeId } = bookingData;
-            let roomType = await RoomType.getById(roomTypeId);
-            let start = new Date(startDay);
-            let end = new Date(endDay);
-            let diffInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-            let totalMoney = roomType.GiaNgay * diffInDays;
+            const roomType = await RoomType.getById(roomTypeId);
+            const start = new Date(startDay);
+            const end = new Date(endDay);
+            const diffInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            const totalMoney = roomType.GiaNgay * diffInDays;
+
+            // Bước 3: Thêm chi tiết phiếu thuê
             const [bookingDetailResult] = await connection.query(
-                `INSERT INTO CT_PhieuThue (MaPhieuThue, SoPhong, NgayBD, NgayKT, ThoiDiemCheckIn, NoiDungCheckIn,ThoiDiemCheckOut,NoiDungCheckOut, SoNguoiO, TinhTrangThue, TienPhong)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO CT_PhieuThue (MaPhieuThue, SoPhong, NgayBD, NgayKT, ThoiDiemCheckIn, NoiDungCheckIn, ThoiDiemCheckOut, NoiDungCheckOut, SoNguoiO, TinhTrangThue, TienPhong)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [bookingId, selectedRoom, startDay, endDay, null, null, null, null, numberOfCustomers, "Phòng đã đặt", totalMoney]
-            )
+            );
+            const bookingDetailId = bookingDetailResult.insertId;
 
-            await connection.commit(); // Commit giao dịch
+            // Bước 4: Truy vấn lại dữ liệu đầy đủ của phiếu thuê và chi tiết
+            const [bookingRow] = await connection.query("SELECT * FROM PhieuThue WHERE MaPhieuThue = ?", [bookingId]);
+            const [bookingDetailRow] = await connection.query("SELECT * FROM CT_PhieuThue WHERE MaCTPT = ?", [bookingDetailId]);
 
-            return { MaCTPT: bookingDetailResult.insertId, MaPhieuThue: bookingId, ...bookingData };
+            await connection.commit();
+
+            return {
+                booking: bookingRow[0],
+                bookingDetail: {
+                    ...bookingDetailRow[0],
+                    GiaNgay: roomType.GiaNgay
+                }
+            };
         } catch (error) {
-            await connection.rollback(); // Rollback giao dịch nếu có lỗi
+            await connection.rollback();
             console.error("Error creating booking:", error);
             throw new Error("Error creating booking");
         } finally {
-            connection.release(); // Giải phóng kết nối
+            connection.release();
         }
     }
 

@@ -41,7 +41,7 @@ import {
   Check,
 } from "lucide-react";
 import { Separator } from "../../components/ui/separator";
-import { createOrder, sendBookingToEmail } from "../../config/api";
+import { createOrder, createPayment, sendBookingToEmail } from "../../config/api";
 
 // Mock Data
 export default function CartPage() {
@@ -59,6 +59,7 @@ export default function CartPage() {
   });
   const [bookingComplete, setBookingComplete] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isOnline, SetIsOnline] = useState(false);
 
   useEffect(() => {
     const rawCart = localStorage.getItem("hotel-cart");
@@ -113,6 +114,7 @@ export default function CartPage() {
         offeredDate: item.offeredDate,
       }));
     return {
+      isOnline: isOnline,
       fullName: formData.name,
       email: formData.email,
       phone: formData.phone,
@@ -156,21 +158,21 @@ export default function CartPage() {
 
   const payosMutation = useMutation({
     mutationFn: async (data) => {
+      SetIsOnline(true);
       // Chuẩn bị dữ liệu gửi lên PayOS
       const bookingData = prepareBookingData(data);
-      // Gửi thêm tổng tiền (đã gồm thuế)
-      const payload = {
-        ...bookingData,
-        totalAmount: Math.round(totalPrice * 1.1),
-      };
       // Gọi API PayOS
-      const res = await apiRequest("POST", "/api/payments/create", payload);
-      const result = await res.json();
+      const res = await createPayment({
+        ...bookingData,
+        totalPrice: Math.round(totalPrice * 1.1) // Gửi thêm tổng tiền (đã gồm thuế)
+      })
+      const result = res.data;
       if (result && result.checkoutUrl) {
         window.location.href = result.checkoutUrl; // Redirect sang PayOS
       } else {
         throw new Error(result?.message || "Không lấy được link thanh toán");
       }
+      SetIsOnline(false);
     },
     onError: (error) => {
       toast({
@@ -178,6 +180,7 @@ export default function CartPage() {
         description: error.message || "Không thể tạo link thanh toán.",
         variant: "destructive",
       });
+      SetIsOnline(false);
     },
   });
 

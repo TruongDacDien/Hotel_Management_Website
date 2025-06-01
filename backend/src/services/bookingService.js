@@ -4,6 +4,7 @@ import CustomerAccountService from "./customerAccountService.js";
 import ServiceService from "./serviceService.js";
 import ServiceUsageDetailService from "./serviceUsageDetailService.js";
 import BookingDetailService from "./bookingDetailService.js";
+import RoomTypeService from "./roomTypeService.js";
 
 class BookingService {
     static async getAll() {
@@ -34,8 +35,8 @@ class BookingService {
     }
 
     static async customerOrder(bookingData) {
-        if (!bookingData.fullName || !bookingData.email || !bookingData.phone) {
-            throw new Error('Missing required fields');
+        if (!bookingData.fullName || !bookingData.email || !bookingData.phone || (bookingData.roomRequests.length === 0 && bookingData.serviceRequests.length === 0)) {
+            return res.status(400).json({ error: "Missing required fields or room requests" });
         }
 
         const customer = await CustomerAccountService.findUserByEmail(bookingData.email);
@@ -93,6 +94,8 @@ class BookingService {
                 overallRoomSuccess = true; // Có ít nhất một phòng được đặt
             }
 
+            const roomTypeInfor = await RoomTypeService.getById(roomTypeId);
+
             // Lưu kết quả cho yêu cầu này
             roomResults.push({
                 roomTypeId,
@@ -103,16 +106,17 @@ class BookingService {
                 endDay,
                 bookings: bookingRoomResults,
                 message: failedRooms > 0
-                    ? `For room type ${roomTypeId} from ${startDay} to ${endDay}: Booked ${roomsToBook} room(s), failed to book ${failedRooms} room(s) due to insufficient availability.`
-                    : `For room type ${roomTypeId} from ${startDay} to ${endDay}: Successfully booked ${roomsToBook} room(s).`,
+                    ? `Với loại ${roomTypeInfor.TenLoaiPhong} từ ${startDay} đến ${endDay}: Đã đặt ${roomsToBook} phòng, đặt không thành công ${failedRooms} phòng vì không còn đủ phòng trống.`
+                    : `Với loại ${roomTypeInfor.TenLoaiPhong} từ ${startDay} đến ${endDay}: Đã đặt thành công ${roomsToBook} phòng.`,
             });
         }
 
-        for (const roomResult of roomResults) {
-            for (const booking of roomResult.bookings) {
-                await BookingDetailService.updateStatus(booking.MaCTPT, "Đã thanh toán online");
+        if (bookingData.isOnline)
+            for (const roomResult of roomResults) {
+                for (const booking of roomResult.bookings) {
+                    await BookingDetailService.updateStatus(booking.MaCTPT, "Đã thanh toán online");
+                }
             }
-        }
 
         // Xử lý từng yêu cầu đặt dịch vụ
         for (const request of serviceRequests) {
@@ -178,8 +182,8 @@ class BookingService {
                 offeredDate,
                 services: bookingServiceResults,
                 message: failedServices > 0
-                    ? `For service ${serviceId} on ${offeredDate}: Booked ${servicesToBook} service(s), failed to book ${failedServices} service(s) due to insufficient availability.`
-                    : `For service ${serviceId} on ${offeredDate}: Successfully booked ${servicesToBook} service(s).`,
+                    ? `Với dịch vụ ${serviceId} vào ngày ${offeredDate}: Đã đặt ${servicesToBook} dịch vụ, đặt không thành công ${failedServices} dịch vụ vì không còn đủ dịch vụ.`
+                    : `Với dịch vụ ${serviceId} vào ngày ${offeredDate}: Đã đặt thành công ${servicesToBook} dịch vụ.`,
             });
         }
 
@@ -189,12 +193,12 @@ class BookingService {
             roomResults,
             serviceResults,
             message: overallRoomSuccess && overallServiceSuccess
-                ? "Some rooms and services were booked successfully. Check results for details."
+                ? "Một số phòng và dịch vụ đã đặt thành công. Kiểm tra kết quả để biết thêm chi tiết!"
                 : overallRoomSuccess
-                    ? "Some rooms were booked successfully. Check results for details."
+                    ? "Một số phòng đã đặt thành công. Kiểm tra kết quả để biết thêm chi tiết!"
                     : overallServiceSuccess
-                        ? "Some services were booked successfully. Check results for details."
-                        : "Failed to book any rooms or services due to insufficient availability.",
+                        ? "Một dịch vụ đã đặt thành công. Kiểm tra kết quả để biết thêm chi tiết!"
+                        : "Không thể đặt phòng hoặc dịch vụ nào do không đủ số lượng!",
         };
 
         if (!overallRoomSuccess && !overallServiceSuccess) {
