@@ -141,9 +141,6 @@ class EmailController {
       return res.status(400).json({ error: "Missing required fields or room requests" });
     }
 
-    // Gọi BookingService.customerOrder để xử lý đặt phòng và dịch vụ
-    const result = await BookingService.customerOrder(bookingData);
-
     // Gửi email xác nhận
     const emailSent = await EmailService.sendEmailWithHTMLTemplate(
       bookingData.email,

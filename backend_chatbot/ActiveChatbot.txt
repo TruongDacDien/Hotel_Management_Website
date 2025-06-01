@@ -1,0 +1,18 @@
+Chạy terminal cho backend_chatbot rồi chạy các lệnh sau:
+ 1. python -m venv venv
+ 2. source venv\Scripts\activate
+ 3. pip install -r requirements.txt
+
+Chạy chatbot: python app.py
+PostMan: 
+ - POST http://127.0.0.1:5001/chat
+ - Header:
+    + Key: Content-Type
+    + Value: application/json
+ - Body -> raw -> JSON: 
+    {
+        "message": "Khách sạn có các loại phòng nào phù hợp cho 2 người?",
+        "start_date": "2025-06-01 12:00:00",
+        "end_date": "2025-06-02 12:00:00",
+        "temp_user_id": "abcd_1234" //Hoặc customer_id="MaTKKH"
+    }
