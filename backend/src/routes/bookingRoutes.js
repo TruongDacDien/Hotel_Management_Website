@@ -9,5 +9,6 @@ router.post('/', bookingController.create);
 router.put('/:bookingId', bookingController.update);
 router.delete('/:bookingId', bookingController.delete);
 router.post('/customerOrder', bookingController.customerOrder);
+router.get('/history', bookingController.getAllCustomerOrder);
 
 export default router;
