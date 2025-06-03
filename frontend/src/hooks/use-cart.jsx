@@ -7,6 +7,7 @@ const CART_STORAGE_KEY = "hotel-cart";
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [history, setHistory] = useState([]);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -33,6 +34,7 @@ export function CartProvider({ children }) {
   }, [items, isLoaded]);
 
   const addRoom = (room, checkIn, checkOut, userInfo) => {
+    saveSnapshot();
     // Create a unique ID for this room booking using dates
     const id = `room-${room.id}-${checkIn}-${checkOut}`;
 
@@ -65,6 +67,7 @@ export function CartProvider({ children }) {
   };
 
   const addService = (service, userInfo) => {
+    saveSnapshot();
     const id = `service-${service.id}`;
 
     const existingItemIndex = items.findIndex((item) => item.id === id);
@@ -93,10 +96,14 @@ export function CartProvider({ children }) {
   };
 
   const removeItem = (id) => {
+    saveSnapshot();
     setItems(items.filter((item) => item.id !== id));
   };
 
   const updateQuantity = (id, quantity) => {
+    const currentItem = items.find((item) => item.id === id);
+    if (!currentItem || currentItem.quantity === quantity) return;
+    saveSnapshot();
     if (quantity <= 0) {
       removeItem(id);
       return;
@@ -108,6 +115,7 @@ export function CartProvider({ children }) {
   };
 
   const clearCart = () => {
+    saveSnapshot();
     setItems([]);
   };
 
@@ -117,6 +125,53 @@ export function CartProvider({ children }) {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const saveSnapshot = () => {
+    const current = JSON.stringify(items);
+    const last = history[history.length - 1];
+    if (current !== last) {
+      setHistory([...history, current]); // chỉ lưu nếu khác
+    }
+  };
+
+  const clearSnapshots = () => {
+    setHistory([]);
+  };
+
+  // const undo = () => {
+  //   if (history.length === 0) return false;
+
+  //   const lastSnapshot = history[history.length - 1];
+  //   const restored = JSON.parse(lastSnapshot);
+
+  //   // Cập nhật items và đồng thời cập nhật history đúng thời điểm
+  //   setItems(() => {
+  //     setHistory((prev) => prev.slice(0, prev.length - 1));
+  //     return restored;
+  //   });
+
+  //   return true;
+  // };
+  const undo = () => {
+    if (history.length === 0) return false;
+
+    const current = JSON.stringify(items);
+
+    // Tìm snapshot khác hiện tại gần nhất
+    let index = history.length - 1;
+    while (index >= 0 && history[index] === current) {
+      index--;
+    }
+
+    if (index < 0) return false;
+
+    const restored = JSON.parse(history[index]);
+
+    setItems(restored);
+    setHistory((prev) => prev.slice(0, index)); // cắt bỏ hết các bản trùng
+
+    return true;
+  };
 
   return (
     <CartContext.Provider
@@ -130,6 +185,9 @@ export function CartProvider({ children }) {
         totalItems,
         totalPrice,
         isLoaded,
+        undo,
+        clearSnapshots,
+        saveSnapshot,
       }}
     >
       {children}

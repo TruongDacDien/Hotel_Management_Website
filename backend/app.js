@@ -1,7 +1,18 @@
 // app.js
 const cors = require("cors");
 const express = require("express");
+require("./instrument.js"); // Import Sentry instrumentation
+const Sentry = require("@sentry/node");
+
+// Sentry.init({
+//   dsn: "https://YOUR_BACKEND_DSN_HERE",
+//   environment: process.env.NODE_ENV || "development",
+//   debug: true, // tuỳ chọn: xem log gửi lỗi trong terminal
+// });
+
 const app = express();
+app.use(Sentry.Handlers.requestHandler());
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -54,6 +65,18 @@ app.use("/api/roomTypes", roomTypeRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/serviceTypes", serviceTypeRoutes);
 app.use("/api/serviceUsageDetails", serviceUsageDetailRoutes);
+app.get("/debug-sentry", function mainHandler(req, res) {
+  throw new Error("My first Sentry error!");
+});
+
+Sentry.setupExpressErrorHandler(app);
+
+app.use((err, req, res, next) => {
+  res.status(500).json({
+    message: "Lỗi hệ thống",
+    errorId: res.sentry, // res.sentry chứa ID của lỗi gửi đến Sentry
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

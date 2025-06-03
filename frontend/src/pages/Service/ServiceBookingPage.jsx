@@ -345,7 +345,7 @@ function ServiceBookingForm({
             <div className="grid grid-cols-2 gap-4">
               <Button
                 className="w-full"
-                onClick={() => setBookingSuccess(false)}
+                onClick={() => navigate("/services")}
                 variant="outline"
               >
                 Đặt dịch vụ khác

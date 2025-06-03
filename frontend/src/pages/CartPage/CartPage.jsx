@@ -41,15 +41,28 @@ import {
   Check,
 } from "lucide-react";
 import { Separator } from "../../components/ui/separator";
-import { createOrder, createPayment, sendBookingToEmail } from "../../config/api";
+import {
+  createOrder,
+  createPayment,
+  sendBookingToEmail,
+} from "../../config/api";
 
 // Mock Data
 export default function CartPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { items, isLoaded, removeItem, updateQuantity, clearCart, totalPrice } =
-    useCart();
+  const {
+    items,
+    isLoaded,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    totalPrice,
+    undo,
+    saveSnapshot,
+    clearSnapshots,
+  } = useCart();
   const form = useForm({
     defaultValues: {
       name: "",
@@ -60,6 +73,7 @@ export default function CartPage() {
   const [bookingComplete, setBookingComplete] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isOnline, SetIsOnline] = useState(false);
+  const [undoTimer, setUndoTimer] = useState(null);
 
   useEffect(() => {
     const rawCart = localStorage.getItem("hotel-cart");
@@ -123,6 +137,28 @@ export default function CartPage() {
     };
   };
 
+  const handlePrePayment = () => {
+    saveSnapshot(); // lưu trước khi khách vào bước thanh toán
+
+    if (undoTimer) {
+      clearTimeout(undoTimer);
+    }
+
+    const timeoutId = setTimeout(() => {
+      setShowPaymentModal(false);
+      const result = undo(); // hoàn tác thay đổi gần nhất
+      if (result) {
+        toast({
+          title: "Đã hủy đặt chỗ do không thanh toán trong thời gian quy định!",
+          variant: "destructive",
+        });
+      }
+    }, 5 * 60 * 1000); // 5 phút
+
+    setUndoTimer(timeoutId); // lưu lại để có thể hủy
+    setShowPaymentModal(true);
+  };
+
   const bookingMutation = useMutation({
     mutationFn: async (data) => {
       const bookingData = prepareBookingData(data);
@@ -131,6 +167,10 @@ export default function CartPage() {
       return res.data;
     },
     onSuccess: async (_, variables) => {
+      if (undoTimer) {
+        clearTimeout(undoTimer);
+      }
+      clearSnapshots();
       setBookingComplete(true);
       clearCart();
       toast({
@@ -164,8 +204,8 @@ export default function CartPage() {
       // Gọi API PayOS
       const res = await createPayment({
         ...bookingData,
-        totalPrice: Math.round(totalPrice * 1.1) // Gửi thêm tổng tiền (đã gồm thuế)
-      })
+        totalPrice: Math.round(totalPrice * 1.1), // Gửi thêm tổng tiền (đã gồm thuế)
+      });
       const result = res.data;
       if (result && result.checkoutUrl) {
         window.location.href = result.checkoutUrl; // Redirect sang PayOS
@@ -405,8 +445,21 @@ export default function CartPage() {
               <Button variant="outline" onClick={() => navigate("/")}>
                 Tiếp tục đặt
               </Button>
-              <Button variant="destructive" onClick={() => handleClearCart()}>
+              <Button variant="outline" onClick={() => handleClearCart()}>
                 Xóa giỏ hàng
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const restored = undo();
+                  if (!restored) {
+                    toast({ title: "Không có thay đổi nào để hoàn tác!" });
+                  } else {
+                    toast({ title: "Đã hoàn tác thay đổi gần nhất!" });
+                  }
+                }}
+              >
+                Hoàn tác
               </Button>
             </CardFooter>
           </Card>
@@ -437,7 +490,8 @@ export default function CartPage() {
                         });
                         return;
                       }
-                      setShowPaymentModal(true);
+                      handlePrePayment();
+                      // setShowPaymentModal(true);
                     })(e);
                   }}
                   className="space-y-4"
