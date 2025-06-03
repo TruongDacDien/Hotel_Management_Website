@@ -7,6 +7,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import mainRouter from "./routes.js";
 import { fileURLToPath } from "url";
+import * as Sentry from "@sentry/node";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,7 +63,11 @@ app.use(
 );
 
 app.use(mainRouter);
+app.get("/debug-sentry", (req, res) => {
+  throw new Error("Lỗi test gửi về Sentry từ backend");
+});
 
+Sentry.setupExpressErrorHandler(app);
 //special function to catch unhandled error.
 app.use((err, req, res, next) => {
   console.log("There was an exception");
