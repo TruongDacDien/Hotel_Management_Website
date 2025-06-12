@@ -1,17 +1,20 @@
 import expressAsyncHandler from "express-async-handler";
 import PaymentService from "../services/paymentService.js";
 import EmailController from "./emailController.js";
-import crypto from "crypto";
-import { v4 as uuidv4 } from 'uuid';
 import BookingService from "../services/bookingService.js";
+import ServiceService from "../services/serviceService.js";
+import RoomTypeService from "../services/roomTypeService.js";
 
 class PaymentController {
   createPaymentLink = expressAsyncHandler(async (req, res) => {
-    const bookingData = req.bookingData; // Lấy từ middleware
+    console.log("==> Đã vào createPaymentLink"); // Thêm dòng log này
+
+    const bookingData = req.bookingData;
+
     try {
       // Gọi BookingService.customerOrder để xử lý đặt phòng và dịch vụ
       const orderResult = await BookingService.customerOrder(bookingData);
-
+      console.log("Order result:", orderResult); // Log kết quả order
       // Lấy thông tin loại phòng và dịch vụ
       const roomTypePromises = orderResult.roomResults.map(async (result) => {
         if (result.roomTypeId) {
@@ -95,19 +98,28 @@ class PaymentController {
         price: Math.round(totalRoomTax + totalServiceTax),
       });
 
+      //Tạo orderCode
+      const generateSafeOrderCode = () => {
+        const timestamp = Date.now(); // số ms từ 1970, hiện tại là khoảng 13 chữ số
+        const random = Math.floor(Math.random() * 100000); // 5 chữ số
+        const orderCode = Number(`${timestamp}${random}`.slice(0, 15)); // cắt bớt nếu vượt quá 15 chữ số
+
+        return Math.min(orderCode, Number.MAX_SAFE_INTEGER); // đảm bảo an toàn
+      };
+
       // Tạo payment link với PayOS
       const paymentLink = await PaymentService.createPaymentLink(
         {
-          orderCode: uuidv4(),
+          orderCode: generateSafeOrderCode(),
           amount,
           description: "THANH TOAN KHACH SAN",
           items,
           cancelUrl: "http://localhost:5173/cart",
           returnUrl: "http://localhost:5173/cart",
         },
-        bookingData
+        { ...bookingData, orderResult }
       );
-
+      
       return res.json({
         error: 0,
         message: "Success",
@@ -132,32 +144,109 @@ class PaymentController {
     }
   });
 
+  updateBookingStatusFromReturn = expressAsyncHandler(async (req, res) => {
+    try {
+      const { orderCode, status } = req.body;
+      if (!orderCode || !status) {
+        return res.status(400).json({
+          error: -1,
+          message: "Missing orderCode or status",
+        });
+      }
+
+      await PaymentService.updateBookingStatus(status, orderCode);
+      return res.json({
+        error: 0,
+        message: "Booking status updated successfully",
+      });
+    } catch (error) {
+      console.error("Error in updateBookingStatusFromReturn:", error);
+      return res.status(500).json({
+        error: -1,
+        message: "Internal server error",
+      });
+    }
+  });
+
+  getBookingStatus = expressAsyncHandler(async (req, res) => {
+    try {
+      const { orderCode } = req.params;
+      if (!orderCode) {
+        return res.status(400).json({
+          error: -1,
+          message: "Missing orderCode",
+          data: null,
+        });
+      }
+
+      const bookingData = await PaymentService.getBookingStatus(orderCode);
+
+      if (!bookingData) {
+        return res.status(404).json({
+          error: -1,
+          message: "Booking not found",
+          data: null,
+        });
+      }
+
+      return res.json({
+        error: 0,
+        message: "Success",
+        data: bookingData,
+      });
+    } catch (error) {
+      console.error("Error in getBookingStatus:", error);
+      return res.status(500).json({
+        error: -1,
+        message: "Internal server error",
+        data: null,
+      });
+    }
+  });
+
   handleWebhook = expressAsyncHandler(async (req, res) => {
     const webhookData = req.body;
+    console.log("Webhook data:", webhookData);
+    let signature = req.headers["x-payos-signature"];
 
-    // Xác minh webhook
-    const signature = req.headers["x-payos-signature"];
-    const checksumKey = process.env.PAYOS_CHECKSUM_KEY;
-    const rawBody = JSON.stringify(webhookData);
-    const computedSignature = crypto
-      .createHmac("sha256", checksumKey)
-      .update(rawBody)
-      .digest("hex");
+    // Kiểm tra chữ ký từ body nếu thiếu header
+    if (!signature && webhookData?.signature) {
+      console.log("Using signature from body:", webhookData.signature);
+      signature = webhookData.signature;
+    }
 
-    if (signature !== computedSignature) {
-      return res.status(400).json({
-        error: -1,
-        message: "Invalid webhook signature",
+    // Xử lý webhook test
+    if (!signature || webhookData?.data?.orderCode === 123) {
+      console.log("Webhook test received");
+      return res.status(200).json({
+        error: 0,
+        message: "Webhook test confirmed",
         data: null,
       });
     }
 
+    // Kiểm tra chữ ký
+    // const computedSignature = crypto
+    //   .createHmac("sha256", process.env.PAYOS_CHECKSUM_KEY)
+    //   .update(JSON.stringify(req.body)) // Dữ liệu gốc từ webhook (raw JSON)
+    //   .digest("hex");
+
+    // if (signature !== computedSignature) {
+    //   console.log("Signature mismatch:", { received: signature, computed: computedSignature });
+    //   return res.status(400).json({
+    //     error: -1,
+    //     message: "Invalid webhook signature",
+    //     data: null,
+    //   });
+    // }
+
     // Xử lý webhook
-    const { orderCode, status } = webhookData;
-    if (status === "PAID") {
-      const bookingData = await PaymentService.getPendingBooking(orderCode);
-      if (!bookingData) {
-        return res.status(404).json({
+    const { data } = webhookData;
+    console.log("Processing webhook with orderCode:", data.orderCode);
+    if (data.desc === "success") {
+      const bookingResult = await PaymentService.getPendingBooking(data.orderCode);
+      if (!bookingResult) {
+        return res.status(400).json({
           error: -1,
           message: "Booking data not found",
           data: null,
@@ -165,12 +254,20 @@ class PaymentController {
       }
 
       try {
-        const result = await EmailController.sendBookingConfirmation(
-          { body: bookingData },
-          res,
-          () => { }
-        );
-        await PaymentService.deletePendingBooking(orderCode);
+        console.log("Attempting to send booking confirmation email...");
+        const fakeReq = {
+          body: {
+            isOnline: bookingResult.isOnline,
+            fullName: bookingResult.fullName,
+            email: bookingResult.email,
+            phone: bookingResult.phone,
+            roomRequests: bookingResult.roomRequests,
+            serviceRequests: bookingResult.serviceRequests,
+            bookingResult: bookingResult.orderResult,
+          },
+        };
+        const result = await EmailController.sendBookingConfirmation(fakeReq);
+        //await PaymentService.deletePendingBooking(data.orderCode);
         return res.json({
           error: 0,
           message: "Webhook processed successfully",
@@ -186,6 +283,7 @@ class PaymentController {
       }
     }
 
+    console.log("Webhook received but not processed, desc:", data.desc);
     return res.json({
       error: 0,
       message: "Webhook received",

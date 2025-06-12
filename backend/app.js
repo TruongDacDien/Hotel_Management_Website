@@ -1,6 +1,6 @@
 // app.js
-const cors = require("cors");
-const express = require("express");
+import cors from "cors";
+import express from "express";
 require("./instrument.js"); // Import Sentry instrumentation
 const Sentry = require("@sentry/node");
 

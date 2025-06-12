@@ -6,6 +6,7 @@ import { CartIcon } from "../../components/cart/CartIcon";
 import { useAuth } from "../../hooks/use-auth";
 import { UserCircle } from "lucide-react";
 import defaultAvatar from "../../assets/avatar-default.svg";
+import { getCustomerAccountById } from "../../config/api";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -13,6 +14,23 @@ export default function Header() {
 
   const { user, logoutMutation } = useAuth();
   //console.log(user);
+
+  const [userInfor, setUserInfor] = useState(null);
+  const fetchUser = async () => {
+    if (!user || !user.id) return;
+    try {
+      const res = await getCustomerAccountById(user.id);
+
+      console.log(res);
+
+      setUserInfor(res);
+    } catch (err) {
+      console.error("Failed to fetch user");
+    }
+  };
+  useEffect(() => {
+    fetchUser();
+  }, [user]);
 
   const handleScrollTo = (id) => {
     const element = document.getElementById(id);
@@ -45,9 +63,8 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed w-full bg-white z-50 transition-all duration-300 ${
-        scrolled ? "shadow-md py-2" : "py-3"
-      }`}
+      className={`fixed w-full bg-white z-50 transition-all duration-300 ${scrolled ? "shadow-md py-2" : "py-3"
+        }`}
     >
       <div className="w-full px-4 flex items-center justify-between">
         <Link to="/">
@@ -69,7 +86,7 @@ export default function Header() {
           </NavLink>
           <div className="flex items-center space-x-4">
             <CartIcon />
-            {user ? (
+            {userInfor ? (
               <div className="flex items-center space-x-3">
                 {/* <span className="text-sm">
                   Chào, {user.name?.split(" ")[0]}
@@ -80,15 +97,15 @@ export default function Header() {
                   className="flex items-center space-x-2 cursor-pointer"
                 >
                   <img
-                    src={user.avatar || defaultAvatar}
+                    src={userInfor?.AvatarURL || defaultAvatar}
                     alt="Avatar"
                     className="h-6 w-6 rounded-full object-cover"
                   />
                   <span className="text-sm font-medium">
-                    Hi, {user.name?.split(" ")[0]}
+                    Hi, {userInfor.TenKH?.split(" ")[0]}
                   </span>
                 </Link>
-                {user.isAdmin && (
+                {/* {user.isAdmin && (
                   <Link to="/admin">
                     <Button
                       variant="outline"
@@ -98,7 +115,7 @@ export default function Header() {
                       Admin
                     </Button>
                   </Link>
-                )}
+                )} */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -151,9 +168,8 @@ function NavLink({ to, children, onClick }) {
   return (
     <Link to={to} onClick={onClick}>
       <div
-        className={`font-medium cursor-pointer transition-colors duration-300 ${
-          isActive ? "text-primary" : "text-neutral-700 hover:text-primary"
-        }`}
+        className={`font-medium cursor-pointer transition-colors duration-300 ${isActive ? "text-primary" : "text-neutral-700 hover:text-primary"
+          }`}
       >
         {children}
       </div>

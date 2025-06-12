@@ -90,6 +90,7 @@ class BookingService {
                     endDay,
                     roomTypeId
                 });
+                console.log("==> bookingRoom:", bookingRoom);
                 bookingRoomResults.push(bookingRoom);
                 overallRoomSuccess = true; // Có ít nhất một phòng được đặt
             }
@@ -111,12 +112,14 @@ class BookingService {
             });
         }
 
-        if (bookingData.isOnline)
+        if (bookingData.isOnline === true) {
             for (const roomResult of roomResults) {
                 for (const booking of roomResult.bookings) {
-                    await BookingDetailService.updateStatus(booking.MaCTPT, "Đã thanh toán online");
+                    console.log("==> booking.MaCTPT:", booking.bookingDetail?.MaCTPT);
+                    await BookingDetailService.updateStatus(booking.bookingDetail.MaCTPT, "Đã thanh toán online");
                 }
             }
+        }
 
         // Xử lý từng yêu cầu đặt dịch vụ
         for (const request of serviceRequests) {

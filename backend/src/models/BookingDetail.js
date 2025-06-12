@@ -97,7 +97,7 @@ class BookingDetail {
       if (result.affectedRows === 0) {
         throw new Error("Booking detail not found or not updated");
       }
-      return { MaPhieu: bookingId, MaPhong: roomId, ...data };
+      return result;
     } catch (error) {
       console.error(`Error updating booking detail with ID ${bookingId} and room ID ${roomId}:`, error);
       throw new Error("Error updating booking detail");

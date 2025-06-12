@@ -8,12 +8,14 @@ const payOS = new PayOS(client_id, api_key, checksum_key);
 class PaymentService {
   static pool = databaseInstance.getPool();
 
-  static async createPaymentLink(paymentData, bookingData) {
+  static async createPaymentLink(paymentData, bookingResult) {
     try {
       await this.pool.query(
         "INSERT INTO PendingBookings (orderCode, bookingData) VALUES (?, ?)",
-        [paymentData.orderCode, JSON.stringify(bookingData)]
+        [paymentData.orderCode, JSON.stringify(bookingResult)]
       );
+      await this.updateBookingStatus("PENDING", paymentData.orderCode);
+      console.log("Saved to PendingBookings:", { orderCode: paymentData.orderCode, bookingResult });
       return await payOS.createPaymentLink(paymentData);
     } catch (error) {
       console.error("Error in createPaymentLink:", error);
@@ -30,6 +32,32 @@ class PaymentService {
       return rows.length > 0 ? JSON.parse(rows[0].bookingData) : null;
     } catch (error) {
       console.error("Error in getPendingBooking:", error);
+      throw error;
+    }
+  }
+
+  static async getBookingStatus(orderCode) {
+    try {
+      const [rows] = await this.pool.query(
+        "SELECT status FROM PendingBookings WHERE orderCode = ?",
+        [orderCode]
+      );
+      return rows.length > 0 ? rows[0].status : null;
+    } catch (error) {
+      console.error("Error in getBookingStatus:", error);
+      throw error;
+    }
+  }
+
+  static async updateBookingStatus(status, orderCode) {
+    try {
+      const [rows] = await this.pool.query(
+        "UPDATE PendingBookings SET status = ? WHERE orderCode = ?",
+        [status, orderCode]
+      );
+      return rows.length > 0 ? rows[0].status : null;
+    } catch (error) {
+      console.error("Error in getBookingStatus:", error);
       throw error;
     }
   }
