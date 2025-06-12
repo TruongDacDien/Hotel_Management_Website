@@ -6,6 +6,7 @@ import { apiRequest } from "../../lib/queryClient";
 import { useCart } from "../../hooks/use-cart";
 import { useToast } from "../../hooks/use-toast";
 import PaymentMethodModal from "../../components/PaymentMethodModal";
+import axios from "../../config/axios_custom";
 
 import {
   Form,
@@ -46,6 +47,7 @@ import {
   createPayment,
   sendBookingToEmail,
 } from "../../config/api";
+import { useSearchParams } from "react-router-dom";
 
 // Mock Data
 export default function CartPage() {
@@ -72,7 +74,6 @@ export default function CartPage() {
   });
   const [bookingComplete, setBookingComplete] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [isOnline, SetIsOnline] = useState(false);
   const [undoTimer, setUndoTimer] = useState(null);
 
   useEffect(() => {
@@ -97,6 +98,40 @@ export default function CartPage() {
       form.setValue("phone", firstGuest.phone);
     }
   }, [items, form]);
+
+  const [searchParams] = useSearchParams();
+  const [hasUpdatedStatus, setHasUpdatedStatus] = useState(false);
+  const status = searchParams.get("status");
+  const orderCode = searchParams.get("orderCode");
+  useEffect(() => {
+    if (!hasUpdatedStatus && status && orderCode) {
+      setHasUpdatedStatus(true);
+      axios.post(`/payment/update-status`, {
+        status,
+        orderCode,
+      })
+        .then((res) => {
+          console.log("Cập nhật trạng thái thành công", res.data);
+          if (status === "PAID") {
+            if (undoTimer) {
+              clearTimeout(undoTimer);
+            }
+            clearSnapshots();
+            setBookingComplete(true);
+            clearCart(); // chỉ xóa nếu đã thanh toán thành công
+            toast({ title: "Thanh toán thành công! Đã đặt chỗ." });
+          } else if (status === "CANCELLED") {
+            toast({
+              title: "Thanh toán đã bị hủy.",
+              variant: "destructive",
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Lỗi khi cập nhật trạng thái:", err);
+        });
+    }
+  }, [status, orderCode, hasUpdatedStatus, clearCart, toast]);
 
   const handleQuantityChange = (id, quantity) => {
     updateQuantity(id, quantity); // dùng hàm từ context
@@ -128,7 +163,6 @@ export default function CartPage() {
         offeredDate: item.offeredDate,
       }));
     return {
-      isOnline: isOnline,
       fullName: formData.name,
       email: formData.email,
       phone: formData.phone,
@@ -161,7 +195,10 @@ export default function CartPage() {
 
   const bookingMutation = useMutation({
     mutationFn: async (data) => {
-      const bookingData = prepareBookingData(data);
+      const bookingData = {
+        ...prepareBookingData(data),
+        isOnline: false,
+      };
       console.log("Booking data prepared:", bookingData);
       const res = await createOrder(bookingData);
       return res.data;
@@ -198,29 +235,39 @@ export default function CartPage() {
 
   const payosMutation = useMutation({
     mutationFn: async (data) => {
-      SetIsOnline(true);
-      // Chuẩn bị dữ liệu gửi lên PayOS
-      const bookingData = prepareBookingData(data);
-      // Gọi API PayOS
-      const res = await createPayment({
-        ...bookingData,
-        totalPrice: Math.round(totalPrice * 1.1), // Gửi thêm tổng tiền (đã gồm thuế)
-      });
-      const result = res.data;
-      if (result && result.checkoutUrl) {
-        window.location.href = result.checkoutUrl; // Redirect sang PayOS
-      } else {
-        throw new Error(result?.message || "Không lấy được link thanh toán");
+      const bookingData = {
+        ...prepareBookingData(data),
+        isOnline: true,
+      };
+      console.log("PayOS Booking data:", bookingData);
+      return bookingData;
+    },
+    onSuccess: async (bookingData) => {
+      try {
+        const res = await createPayment({
+          ...bookingData,
+          totalPrice: Math.round(totalPrice * 1.1),
+        });
+        const result = res.data;
+        if (result?.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+        } else {
+          throw new Error(result?.message || "Không lấy được link thanh toán");
+        }
+      } catch (err) {
+        toast({
+          title: "Lỗi khi tạo link thanh toán",
+          description: err.message,
+          variant: "destructive",
+        });
       }
-      SetIsOnline(false);
     },
     onError: (error) => {
       toast({
         title: "Thanh toán thất bại",
-        description: error.message || "Không thể tạo link thanh toán.",
+        description: error.message,
         variant: "destructive",
       });
-      SetIsOnline(false);
     },
   });
 
@@ -240,6 +287,24 @@ export default function CartPage() {
       return;
     }
     bookingMutation.mutate(data);
+  };
+
+  const onSubmitPayOS = (data) => {
+    if (!data.name || data.name.length < 2) {
+      form.setError("name", {
+        type: "manual",
+        message: "Name must be at least 2 characters",
+      });
+      return;
+    }
+    if (!data.email || !/\S+@\S+\.\S+/.test(data.email)) {
+      form.setError("email", {
+        type: "manual",
+        message: "Please enter a valid email address",
+      });
+      return;
+    }
+    payosMutation.mutate(data);
   };
 
   if (!isLoaded) {
@@ -590,7 +655,7 @@ export default function CartPage() {
                     }}
                     onPayOS={() => {
                       setShowPaymentModal(false);
-                      form.handleSubmit((data) => payosMutation.mutate(data))();
+                      form.handleSubmit(onSubmitPayOS)();
                     }}
                   />
                 </form>

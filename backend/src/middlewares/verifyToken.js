@@ -16,6 +16,7 @@ const validateToken = (model) => expressAsyncHandler(async function (req, res, n
         throw customError("User not found!", 404);
       }
       req.user = user;
+      console.log("==> Đã vào validateToken");
       next();
     } catch (error) {
       throw customError(error.message || "Token validation failed", 403);

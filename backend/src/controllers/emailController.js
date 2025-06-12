@@ -132,12 +132,15 @@ class EmailController {
 
   sendBookingConfirmation = expressAsyncHandler(async (req, res, next) => {
     const bookingData = {
+      isOnline: req.body.isOnline,
       fullName: req.body.fullName,
       email: req.body.email,
       phone: req.body.phone,
       roomRequests: req.body.roomRequests || [], // Mảng yêu cầu: [{ roomTypeId, numberOfRooms, startDay, endDay }, ...]
       serviceRequests: req.body.serviceRequests || [] // Mảng yêu cầu: [{ serviceId, quantity, offeredDate }, ...]
     };
+
+    const bookingResult = req.body.bookingResult;
 
     if (
       !bookingData.fullName ||
@@ -150,8 +153,14 @@ class EmailController {
         .json({ msg: "Missing required fields or room requests" });
     }
 
-    // Gọi BookingService.customerorder để xử lý đặt phòng và dịch vụ 
-    const result = await BookingService.customerOrder(bookingData);
+    let result;
+    if (bookingData.isOnline === false) {
+      // Gọi BookingService.customerorder để xử lý đặt phòng và dịch vụ 
+      result = await BookingService.customerOrder(bookingData);
+    } else {
+      result = bookingResult;
+    }
+
 
     // Gửi email xác nhận
     const emailSent = await EmailService.sendEmailWithHTMLTemplate(
@@ -161,17 +170,14 @@ class EmailController {
     );
 
     if (!emailSent) {
-      return res.status(500).json({
-        msg: "Failed to send confirmation email",
-        success: false,
-      });
+      throw new Error("Failed to send confirmation email");
     }
 
-    return res.status(result.success ? 201 : 400).json({
-      msg: "Booking processed and confirmation email sent successfully!",
+    return {
       success: result.success,
+      msg: "Booking processed and confirmation email sent successfully!",
       data: result,
-    });
+    };
   });
 }
 

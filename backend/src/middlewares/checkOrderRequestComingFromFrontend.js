@@ -118,6 +118,6 @@ export const checkOrderRequestComingFromFrontend = expressAsyncHandler(async (re
     roomRequests,
     serviceRequests,
   };
-
+  console.log("==> Đã vào checkOrderRequestComingFromFrontend");
   next();
 });
