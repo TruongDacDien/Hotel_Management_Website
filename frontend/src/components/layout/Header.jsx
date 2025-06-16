@@ -63,11 +63,19 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed w-full bg-white z-50 transition-all duration-300 ${scrolled ? "shadow-md py-2" : "py-3"
-        }`}
+      className={`fixed w-full bg-white z-50 transition-all duration-300 ${
+        scrolled ? "shadow-md py-2" : "py-3"
+      }`}
     >
       <div className="w-full px-4 flex items-center justify-between">
-        <Link to="/">
+        <Link
+          to="/"
+          onClick={() => {
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }, 50); // delay 50ms là đủ
+          }}
+        >
           {" "}
           {/* 🔄 `to` thay vì `href` */}
           <div className="flex items-center cursor-pointer">
@@ -168,8 +176,9 @@ function NavLink({ to, children, onClick }) {
   return (
     <Link to={to} onClick={onClick}>
       <div
-        className={`font-medium cursor-pointer transition-colors duration-300 ${isActive ? "text-primary" : "text-neutral-700 hover:text-primary"
-          }`}
+        className={`font-medium cursor-pointer transition-colors duration-300 ${
+          isActive ? "text-primary" : "text-neutral-700 hover:text-primary"
+        }`}
       >
         {children}
       </div>

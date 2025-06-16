@@ -33,6 +33,10 @@ export default function HomePage() {
   //   }
   // }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   return (
     <>
       <div className="home-container">
