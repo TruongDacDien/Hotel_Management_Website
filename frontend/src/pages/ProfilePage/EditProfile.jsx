@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
-export default function EditProfileModal({ userData, onClose, onSave }) {
+export default function EditProfileModal({ open, userData, onClose, onSave }) {
+  if (!open) return null;
   const [form, setForm] = useState({
     fullName: userData.TenKH || "",
     phone: userData.SDT || "",
@@ -11,7 +12,7 @@ export default function EditProfileModal({ userData, onClose, onSave }) {
     country: userData.QuocTich || "Việt Nam",
     avatarId: userData.AvatarId || "",
     avatarURL: userData.AvatarURL || "",
-    avatarFile: null
+    avatarFile: null,
   });
 
   const handleChange = (e) => {
@@ -92,10 +93,14 @@ export default function EditProfileModal({ userData, onClose, onSave }) {
           className="w-full p-2 border rounded"
         />
 
-        {(form.avatarURL && form.avatarFile) && (
+        {form.avatarURL && form.avatarFile && (
           <div className="flex justify-center">
             <img
-              src={form.avatarURL ? URL.createObjectURL(form.avatarFile) : form.avatarURL}
+              src={
+                form.avatarURL
+                  ? URL.createObjectURL(form.avatarFile)
+                  : form.avatarURL
+              }
               alt="Avatar"
               className="w-24 h-24 object-cover rounded-full border"
             />
