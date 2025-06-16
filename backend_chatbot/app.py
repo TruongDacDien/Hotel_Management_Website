@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from db import (
     get_db_connection,
     get_available_room_types,
@@ -12,7 +13,7 @@ import uuid
 from datetime import datetime
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route("/chat", methods=["POST"])
 def chat():

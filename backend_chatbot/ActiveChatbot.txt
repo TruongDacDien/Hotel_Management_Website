@@ -1,9 +1,9 @@
 Chạy terminal cho backend_chatbot rồi chạy các lệnh sau:
  1. python -m venv venv
- 2. source venv\Scripts\activate
+ 2. .\venv\Scripts\activate
  3. pip install -r requirements.txt
 
-Chạy chatbot: python app.py
+Chạy chatbot: py app.py
 PostMan: 
  - POST http://127.0.0.1:5001/chat
  - Header:

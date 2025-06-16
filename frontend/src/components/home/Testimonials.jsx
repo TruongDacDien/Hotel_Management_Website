@@ -7,7 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../../components/ui/carousel";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Avatar,
@@ -15,11 +15,103 @@ import {
   AvatarImage,
 } from "../../components/ui/avatar";
 import { Star } from "lucide-react";
+import {
+  getAllRatingRoom,
+  getAllRatingService,
+  getRoomTypeById,
+  getServiceById,
+  getCustomerAccountById,
+} from "../../config/api";
+import defaultAvatar from "../../assets/avatar-default.svg"; // Default avatar image
 
 export default function Testimonials() {
-  const [testimonials, setTestimonials] = useState(mockReview);
+  const [testimonials, setTestimonials] = useState(null);
   const isLoading = false;
   const error = null;
+
+  // Fetch ratings from API
+  const fetchRatings = async () => {
+    try {
+      const [roomRatingsRes, serviceRatingsRes] = await Promise.all([
+        getAllRatingRoom(),
+        getAllRatingService(),
+      ]);
+
+      const roomRatings = roomRatingsRes.map((item) => ({
+        ...item,
+        type: "room",
+      }));
+
+      const serviceRatings = serviceRatingsRes.map((item) => ({
+        ...item,
+        type: "service",
+      }));
+
+      const top5 = [...roomRatings, ...serviceRatings]
+        .sort((a, b) => b.SoSao - a.SoSao)
+        .slice(0, 5);
+
+      // Lấy các ID cần fetch
+      const userIds = [...new Set(top5.map((r) => r.MaTKKH))];
+      const roomTypeIds = [
+        ...new Set(
+          top5.filter((r) => r.type === "room").map((r) => r.MaLoaiPhong)
+        ),
+      ];
+      const serviceIds = [
+        ...new Set(top5.filter((r) => r.type === "service").map((r) => r.MaDV)),
+      ];
+
+      // Gọi API theo ID
+      const [users, roomTypes, services] = await Promise.all([
+        Promise.all(userIds.map((id) => getCustomerAccountById(id))),
+        Promise.all(roomTypeIds.map((id) => getRoomTypeById(id))),
+        Promise.all(serviceIds.map((id) => getServiceById(id))),
+      ]);
+
+      const userMap = new Map(
+        users.map((res) => [
+          res.MaTKKH,
+          {
+            name: res.TenKH,
+            avatarUrl: res.AvatarURL,
+            country: res.QuocTich,
+          },
+        ])
+      );
+
+      const roomMap = new Map(
+        roomTypes.map((res) => [res.MaLoaiPhong, res.TenLoaiPhong])
+      );
+
+      const serviceMap = new Map(services.map((res) => [res.MaDV, res.TenDV]));
+
+      console.log(roomMap, serviceMap);
+
+      // Chuẩn hóa dữ liệu cho hiển thị
+      const testimonials = top5.map((item) => ({
+        type: item.type,
+        content: item.NoiDung,
+        rating: item.SoSao,
+        date: item.ThoiGian,
+        categoryName:
+          item.type === "room"
+            ? roomMap.get(item.MaLoaiPhong) || "Không rõ phòng"
+            : serviceMap.get(item.MaDV) || "Không rõ dịch vụ",
+        user: userMap.get(item.MaTKKH) || {},
+      }));
+
+      setTestimonials(testimonials);
+    } catch (err) {
+      console.error("Error fetching ratings:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRatings();
+  }, []);
+
+  console.log("Testimonials: ", testimonials);
 
   return (
     <section id="reviews" className="py-20 bg-white">
@@ -39,9 +131,9 @@ export default function Testimonials() {
               <CarouselPrevious className="h-12 w-12 rounded-full shadow-lg bg-white/80 hover:bg-white" />
             </div>
             <CarouselContent>
-              {testimonials.map((testimonial) => (
+              {testimonials?.map((testimonial, index) => (
                 <CarouselItem
-                  key={testimonial.id}
+                  key={index}
                   className="md:basis-1/2 lg:basis-1/3 pl-4"
                 >
                   <TestimonialCard testimonial={testimonial} />
@@ -69,21 +161,23 @@ function TestimonialCard({ testimonial }) {
             ))}
           </div>
         </div>
-        <p className="text-neutral-700 italic mb-6">{testimonial.text}</p>
+        <p className="text-neutral-700 italic mb-6">{testimonial.content}</p>
+        <p className="text-sm text-neutral-500 mb-4">
+          {testimonial.type === "room" ? "Phòng: " : "Dịch vụ: "}
+          <span className="font-medium">{testimonial.categoryName}</span>
+        </p>
         <div className="flex items-center">
           <div className="mr-4">
             <Avatar>
-              <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
-              <AvatarImage
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  testimonial.name
-                )}&background=random`}
-              />
+              <AvatarFallback>{testimonial.user.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={testimonial.user.avatarUrl || defaultAvatar} />
             </Avatar>
           </div>
           <div>
-            <h4 className="font-bold text-primary">{testimonial.name}</h4>
-            <p className="text-sm text-neutral-600">{testimonial.location}</p>
+            <h4 className="font-bold text-primary">{testimonial.user.name}</h4>
+            <p className="text-sm text-neutral-600">
+              {testimonial.user.country}
+            </p>
           </div>
         </div>
       </CardContent>
