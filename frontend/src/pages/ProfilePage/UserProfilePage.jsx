@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../hooks/use-auth";
 import { Link } from "react-router-dom";
@@ -23,6 +23,8 @@ import { Loader2, User } from "lucide-react";
 import {
   getCustomerAccountById,
   updateCustomerAccountById,
+  getHistoryBookingByCustomerId,
+  getServiceById,
 } from "../../config/api";
 import defaultAvatar from "../../assets/avatar-default.svg";
 import EditProfileModal from "./EditProfile";
@@ -84,6 +86,20 @@ const mockBookings = [
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  if (!user) {
+    return (
+      <div className="container mx-auto py-20 px-4">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Vui lòng đăng nhập</h1>
+          <p className="mb-6">Bạn cần đăng nhập để xem trang cá nhân.</p>
+          <Link to="/auth">
+            <Button className="bg-black text-white">Đăng nhập ở đây!</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const { toast } = useToast();
   const [userInfor, setUserInfor] = useState(null);
 
@@ -111,22 +127,29 @@ export default function ProfilePage() {
   //     enabled: !!user,
   //   });
 
-  const bookings = mockBookings;
-  const isLoadingBookings = false;
+  const [bookings, setBookings] = useState([]);
+  const [services, setServices] = useState([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
-  if (!user) {
-    return (
-      <div className="container mx-auto py-20 px-4">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Vui lòng đăng nhập</h1>
-          <p className="mb-6">Bạn cần đăng nhập để xem trang cá nhân.</p>
-          <Link to="/auth">
-            <Button className="bg-black text-white">Đăng nhập ở đây!</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!userInfor?.MaKH) return;
+      try {
+        setIsLoadingBookings(true);
+        const res = await getHistoryBookingByCustomerId(userInfor.MaKH);
+        console.log(res);
+
+        setBookings(res.bookings);
+        setServices(res.services);
+      } catch (err) {
+        console.error("Failed to fetch booking history:", err);
+      } finally {
+        setIsLoadingBookings(false);
+      }
+    };
+
+    fetchBookings();
+  }, [userInfor]);
 
   const handleSave = async (formData) => {
     const data = new FormData();
@@ -152,6 +175,49 @@ export default function ProfilePage() {
     }
     // Cập nhật lại giao diện nếu cần
   };
+
+  //phân trang
+  const [roomPage, setRoomPage] = useState(1);
+  const [servicePage, setServicePage] = useState(1);
+
+  const ITEMS_PER_PAGE = 5;
+
+  const displayedRooms = bookings.slice(
+    (roomPage - 1) * ITEMS_PER_PAGE,
+    roomPage * ITEMS_PER_PAGE
+  );
+
+  const displayedServices = services.slice(
+    (servicePage - 1) * ITEMS_PER_PAGE,
+    servicePage * ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    console.log("Bookings:", bookings);
+    console.log("Services:", services);
+  }, [bookings, services]);
+
+  // thêm state để lưu mapping
+  const [serviceNames, setServiceNames] = useState({});
+
+  // Lấy tên dịch vụ từ API
+  useEffect(() => {
+    const fetchNames = async () => {
+      const newNames = {};
+      for (const s of services) {
+        if (s.MaDV) {
+          try {
+            const data = await getServiceById(s.MaDV);
+            newNames[s.MaDV] = data.TenDV || "Không xác định";
+          } catch (e) {
+            newNames[s.MaDV] = "Không tìm thấy";
+          }
+        }
+      }
+      setServiceNames(newNames);
+    };
+    fetchNames();
+  }, [services]);
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -247,13 +313,12 @@ export default function ProfilePage() {
                 <Button onClick={() => setShowModal(true)} variant="outline">
                   Chỉnh sửa
                 </Button>
-                {showModal && (
-                  <EditProfileModal
-                    userData={userInfor}
-                    onClose={() => setShowModal(false)}
-                    onSave={handleSave}
-                  />
-                )}
+                <EditProfileModal
+                  open={showModal}
+                  userData={userInfor}
+                  onClose={() => setShowModal(false)}
+                  onSave={handleSave}
+                />
               </div>
             </CardContent>
           </Card>
@@ -262,32 +327,130 @@ export default function ProfilePage() {
         <TabsContent value="bookings" className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Your Booking History</CardTitle>
-              <CardDescription>
-                View all your past and upcoming bookings
-              </CardDescription>
+              <CardTitle>Lịch sử đơn hàng của bạn</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoadingBookings ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : bookings && bookings.length > 0 ? (
-                <div className="space-y-6">
-                  {bookings.map((booking) => (
-                    <BookingItem key={booking.id} booking={booking} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    You don't have any bookings yet.
-                  </p>
-                  <Link href="/rooms">
-                    <Button className="mt-4">Book a Room</Button>
-                  </Link>
-                </div>
-              )}
+              <Tabs defaultValue="rooms" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="rooms">Phòng</TabsTrigger>
+                  <TabsTrigger value="services">Dịch vụ</TabsTrigger>
+                </TabsList>
+                <TabsContent value="rooms">
+                  {isLoadingBookings ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : bookings && bookings.length > 0 ? (
+                    <>
+                      <div className="space-y-6">
+                        {displayedRooms.map((booking) => (
+                          <BookingItem key={booking.id} booking={booking} />
+                        ))}
+                      </div>
+                      <div className="flex justify-center mt-4 gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setRoomPage((p) => Math.max(p - 1, 1))}
+                          disabled={roomPage === 1}
+                        >
+                          Trước
+                        </Button>
+
+                        <span className="text-sm text-muted-foreground">
+                          Trang {roomPage} /{" "}
+                          {Math.ceil(bookings.length / ITEMS_PER_PAGE)}
+                        </span>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setRoomPage((p) =>
+                              p < Math.ceil(bookings.length / ITEMS_PER_PAGE)
+                                ? p + 1
+                                : p
+                            )
+                          }
+                          disabled={
+                            roomPage ===
+                            Math.ceil(bookings.length / ITEMS_PER_PAGE)
+                          }
+                        >
+                          Tiếp
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        Bạn chưa có đơn đặt chỗ nào.
+                      </p>
+                      <Link href="/rooms">
+                        <Button variant="custom" className="mt-4">
+                          Đặt phòng ngay
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="services">
+                  {services && services.length > 0 ? (
+                    <>
+                      <div className="space-y-6">
+                        {displayedServices.map((service, index) => (
+                          <ServiceItem
+                            key={index}
+                            service={service}
+                            serviceName={serviceNames[service.MaDV]}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex justify-center mt-4 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setServicePage((p) => Math.max(p - 1, 1))
+                          }
+                          disabled={servicePage === 1}
+                        >
+                          Trước
+                        </Button>
+
+                        <span className="text-sm text-muted-foreground pt-2">
+                          Trang {servicePage} /{" "}
+                          {Math.ceil(services.length / ITEMS_PER_PAGE)}
+                        </span>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setServicePage((p) =>
+                              p < Math.ceil(services.length / ITEMS_PER_PAGE)
+                                ? p + 1
+                                : p
+                            )
+                          }
+                          disabled={
+                            servicePage ===
+                            Math.ceil(services.length / ITEMS_PER_PAGE)
+                          }
+                        >
+                          Tiếp
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        Bạn chưa sử dụng dịch vụ nào.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </TabsContent>
@@ -298,100 +461,111 @@ export default function ProfilePage() {
 
 function BookingItem({ booking }) {
   const isRoomBooking = booking.roomId && !booking.serviceId;
-  const formattedTotal = booking.totalPrice
-    ? Number(booking.totalPrice).toFixed(2)
-    : "0.00";
+  const formattedTotal = booking.TienPhong
+    ? Number(booking.TienPhong).toLocaleString("vi-VN") + " VNĐ"
+    : "N/A";
 
   return (
     <Card className="overflow-hidden">
       <div className="p-6">
         <div className="flex flex-col md:flex-row justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold">{booking.name}</h3>
-            <p className="text-sm text-muted-foreground">{booking.email}</p>
-          </div>
           <div className="mt-2 md:mt-0">
             <Badge
               variant={booking.status === "confirmed" ? "default" : "outline"}
             >
-              {booking.status}
+              {booking.TinhTrangThue}
             </Badge>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {isRoomBooking ? (
-            <>
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  Check-in
-                </h4>
-                <p>
-                  {booking.checkIn
-                    ? format(new Date(booking.checkIn), "MMM dd, yyyy")
-                    : "N/A"}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  Check-out
-                </h4>
-                <p>
-                  {booking.checkOut
-                    ? format(new Date(booking.checkOut), "MMM dd, yyyy")
-                    : "N/A"}
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  Service Date
-                </h4>
-                <p>
-                  {booking.serviceDate
-                    ? format(new Date(booking.serviceDate), "MMM dd, yyyy")
-                    : "N/A"}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  Service Time
-                </h4>
-                <p>{booking.serviceTime || "N/A"}</p>
-              </div>
-            </>
-          )}
+          <>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Dự kiến nhận phòng
+              </h4>
+              <p>
+                {booking.NgayBD
+                  ? format(new Date(booking.NgayBD), "dd/MM/yyyy")
+                  : "N/A"}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Dự kiến trả phòng
+              </h4>
+              <p>
+                {booking.NgayKT
+                  ? format(new Date(booking.NgayKT), "dd/MM/yyyy")
+                  : "N/A"}
+              </p>
+            </div>
+          </>
+
           <div>
             <h4 className="text-sm font-medium text-muted-foreground">
-              Total Price
+              Tiền phòng
             </h4>
-            <p>${formattedTotal}</p>
+            <p>{formattedTotal}</p>
           </div>
         </div>
 
         <div className="mt-4 pt-4 border-t">
-          <div className="flex flex-col md:flex-row md:justify-between">
-            <div className="mb-2 md:mb-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
               <h4 className="text-sm font-medium text-muted-foreground">
-                Special Requests
+                Nhận phòng thực tế
               </h4>
-              <p className="text-sm">{booking.notes || "None"}</p>
+              <p>
+                {booking.ThoiDiemCheckIn
+                  ? format(new Date(booking.ThoiDiemCheckIn), "dd/MM/yyyy")
+                  : "N/A"}
+              </p>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                View Details
-              </Button>
-              {booking.status === "confirmed" && (
-                <Button variant="destructive" size="sm">
-                  Cancel
-                </Button>
-              )}
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Trả phòng thực tế
+              </h4>
+              <p>
+                {booking.ThoiDiemCheckOut
+                  ? format(new Date(booking.ThoiDiemCheckOut), "dd/MM/yyyy")
+                  : "N/A"}
+              </p>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Số phòng
+              </h4>
+              <p className="text-sm">{booking.SoPhong || "N/A"}</p>
             </div>
           </div>
         </div>
       </div>
+    </Card>
+  );
+}
+
+function ServiceItem({ service, serviceName }) {
+  return (
+    <Card className="p-4">
+      <p className="text-sm">
+        Dịch vụ: <strong>{serviceName || "Đang tải..."}</strong>
+      </p>
+      <p className="text-sm">
+        Ngày sử dụng:{" "}
+        <strong>
+          {service.NgayApDung
+            ? format(new Date(service.NgayApDung), "dd/MM/yyyy")
+            : "N/A"}
+        </strong>
+      </p>
+      <p className="text-sm">Số lượng: {service.SL || "N/A"}</p>
+      <p className="text-sm">
+        Thành tiền:{" "}
+        {service.ThanhTien
+          ? Number(service.ThanhTien).toLocaleString("vi-VN") + " VNĐ"
+          : "N/A"}
+      </p>
     </Card>
   );
 }

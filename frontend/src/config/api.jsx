@@ -80,6 +80,12 @@ export const sendBookingToEmail = async (data) => {
   return axios.post("/email/send-booking-confirmation", data);
 };
 
+export const getHistoryBookingByCustomerId = async (customerId) => {
+  return axios.get("/bookings/history", {
+    params: { customerId },
+  });
+};
+
 // export const updateUser = async (id, updateData) => {
 //   return axios.put(`/user/user/${id}`, { ...updateData });
 // };
@@ -132,10 +138,11 @@ export const getAmentitesRoomDetails = async () => {
 export const createPayment = async ({
   isOnline = null,
   fullName = null,
-  email = null, phone = null,
+  email = null,
+  phone = null,
   roomRequests = [],
   serviceRequests = [],
-  totalPrice = null
+  totalPrice = null,
 }) => {
   return await axios.post(`/payment/create`, {
     isOnline,
@@ -144,7 +151,7 @@ export const createPayment = async ({
     phone,
     roomRequests,
     serviceRequests,
-    totalPrice
+    totalPrice,
   });
 };
 
