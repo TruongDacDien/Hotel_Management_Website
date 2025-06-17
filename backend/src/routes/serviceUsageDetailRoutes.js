@@ -8,5 +8,6 @@ router.get('/:bookingId/:serviceId', serviceUsageDetailController.getById);
 router.post('/', serviceUsageDetailController.create);
 router.put('/:bookingId/:serviceId', serviceUsageDetailController.update);
 router.delete('/:bookingId/:serviceId', serviceUsageDetailController.delete);
+router.put('/cancel', serviceUsageDetailController.cancelServiceUsageDetail);
 
 export default router;

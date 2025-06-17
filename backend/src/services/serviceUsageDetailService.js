@@ -27,6 +27,20 @@ class ServiceUsageDetailService {
     await this.getById(bookingId, serviceId);
     return await ServiceUsageDetail.delete(bookingId, serviceId);
   }
+
+   static async updatePaymentStatus(serviceUsageDetailId, status, isPaid, paymentMethod) {
+    if (!serviceUsageDetailId || !status || isPaid === null || !paymentMethod) {
+      throw new Error('Missing data');
+    }
+    return await ServiceUsageDetail.updatePaymentStatus(serviceUsageDetailId, status, isPaid, paymentMethod);
+  }
+
+  static async cancelServiceUsageDetail(serviceUsageDetailId){
+    if(!serviceUsageDetailId){
+      throw new Error('Missing data');
+    }
+    return await ServiceUsageDetail.cancelServiceUsageDetail(serviceUsageDetailId);
+  }
 }
 
 export default ServiceUsageDetailService;

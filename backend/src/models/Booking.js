@@ -71,9 +71,9 @@ class Booking {
 
             // Bước 3: Thêm chi tiết phiếu thuê
             const [bookingDetailResult] = await connection.query(
-                `INSERT INTO CT_PhieuThue (MaPhieuThue, SoPhong, NgayBD, NgayKT, ThoiDiemCheckIn, NoiDungCheckIn, ThoiDiemCheckOut, NoiDungCheckOut, SoNguoiO, TinhTrangThue, TienPhong)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [bookingId, selectedRoom, startDay, endDay, null, null, null, null, numberOfCustomers, "Phòng đã đặt", totalMoney]
+                `INSERT INTO CT_PhieuThue (MaPhieuThue, SoPhong, NgayBD, NgayKT, ThoiDiemCheckIn, NoiDungCheckIn, ThoiDiemCheckOut, NoiDungCheckOut, SoNguoiO, TinhTrangThue, TienPhong, DaThanhToan, HinhThucThanhToan)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [bookingId, selectedRoom, startDay, endDay, null, null, null, null, numberOfCustomers, "Phòng đã đặt", totalMoney, null, null]
             );
             const bookingDetailId = bookingDetailResult.insertId;
 
@@ -139,7 +139,7 @@ class Booking {
             const [customerBookings] = await this.pool.query(
                 `SELECT * 
                  FROM PhieuThue PT, CT_PhieuThue CTPT 
-                 WHERE CTPT.MaPhieuThue = PT.MaPhieuThue AND IsDeleted = 0 AND PT.MaKH = ?`,
+                 WHERE CTPT.MaPhieuThue = PT.MaPhieuThue AND PT.IsDeleted = 0 AND PT.MaKH = ?`,
                 [customerId]
             );
             const [customerServices] = await this.pool.query(

@@ -3,6 +3,8 @@ import transporter from "../config/email.js";
 import CustomerAccountService from "./customerAccountService.js";
 import RoomTypeService from "./roomTypeService.js";
 import ServiceService from "./serviceService.js";
+import RoomService from "./roomService.js";
+import BookingService from "./bookingService.js";
 
 class EmailService {
   static sendEmail = async (to, subject, html) => {
@@ -26,10 +28,36 @@ class EmailService {
     return await CustomerAccountService.findByEmailAndUpdateVerificationCode(email, verification, expirationTime);
   };
 
+  static sendBookingConfirmationByData = async (bookingData) => {
+    // Validate
+    if (
+      !bookingData.fullName ||
+      !bookingData.email ||
+      !bookingData.phone ||
+      (bookingData.roomRequests.length === 0 && bookingData.serviceRequests.length === 0)
+    ) {
+      throw new Error("Thiếu thông tin khách hàng hoặc yêu cầu đặt phòng/dịch vụ.");
+    }
+
+    const result = await BookingService.customerOrder(bookingData);
+
+    const emailSent = await EmailService.sendEmailWithHTMLTemplate(
+      bookingData.email,
+      "Xác nhận đặt phòng và dịch vụ - The Royal Hotel",
+      { ...bookingData, ...result }
+    );
+
+    if (!emailSent) {
+      throw new Error("Gửi email xác nhận thất bại.");
+    }
+
+    return result;
+  };
+
   static sendEmailWithHTMLTemplate = async (to, subject, bookingData) => {
     try {
       // Lấy thông tin loại phòng và dịch vụ để làm giàu dữ liệu
-      const roomTypePromises = bookingData.roomResults.map(async (result) => {
+      const roomTypePromises = (bookingData.roomResults || []).map(async (result) => {
         if (result.roomTypeId) {
           const roomType = await RoomTypeService.getById(result.roomTypeId);
           return {
@@ -40,7 +68,7 @@ class EmailService {
         return result;
       });
 
-      const servicePromises = bookingData.serviceResults.map(async (result) => {
+      const servicePromises = (bookingData.serviceResults || []).map(async (result) => {
         if (result.serviceId) {
           const service = await ServiceService.getServiceById(result.serviceId);
           return {
@@ -56,7 +84,7 @@ class EmailService {
       const enrichedServiceResults = await Promise.all(servicePromises);
 
       // Tính tổng tiền
-      const totalRoomMoney = enrichedRoomResults.reduce((sum, result) => {
+      const totalRoomMoney = (enrichedRoomResults || []).reduce((sum, result) => {
         return (
           sum +
           result.bookings.reduce((roomSum, booking) => {
@@ -67,7 +95,7 @@ class EmailService {
 
       const totalRoomTax = (totalRoomMoney * 10) / 100;
 
-      const totalServiceMoney = enrichedServiceResults.reduce((sum, result) => {
+      const totalServiceMoney = (enrichedServiceResults || []).reduce((sum, result) => {
         return sum + (result.totalMoney || 0);
       }, 0);
 
@@ -208,6 +236,185 @@ class EmailService {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: to,
+        subject: subject,
+        html: htmlTemplate,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return false;
+    }
+  };
+
+  static sendCancelBookingEmailWithHTMLTemplate = async (subject, customerData, bookingDetail) => {
+    try {
+      const room = await RoomService.getById(bookingDetail.SoPhong);
+      const roomType = await RoomTypeService.getById(room.MaLoaiPhong);
+
+      // Tạo template HTML
+      const htmlTemplate = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>The Royal Hotel</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+            th { background-color: #6b3fa4; color: white; }
+            .purple-text { color: #6b3fa4; }
+            h1, h2 { color: #333; }
+            .failed { color: red; }
+          </style>
+        </head>
+        <body>
+          <div>
+            <h1>THE ROYAL HOTEL</h1>
+            <p>The Royal Hotel Hồ Chí Minh</p>
+            <p>11 Đ. Sư Vạn Hạnh, Phường 12, Quận 10, Hồ Chí Minh</p>
+          </div>
+
+          <h1 class="purple-text">XÁC NHẬN HỦY ĐẶT PHÒNG</h1>
+
+          <h2>Thông tin khách hàng</h2>
+          <table>
+            <tr><th>Họ tên</th><td>${customerData.fullname}</td></tr>
+            <tr><th>Email</th><td>${customerData.email}</td></tr>
+            <tr><th>Số điện thoại</th><td>${customerData.phone}</td></tr>
+          </table>
+
+          <h2>Chi tiết hủy đặt phòng</h2>
+          
+          <table>
+            <tr>
+              <th>Mã phiếu thuê</th>
+              <th>Loại phòng</th>
+              <th>Phòng</th>
+              <th>Ngày nhận phòng</th>
+              <th>Ngày trả phòng</th>
+              <th>Giá ngày (VND)</th>
+              <th>Thành tiền (VND)</th>
+            </tr>
+
+            <tr>
+              <td>${bookingDetail.MaPhieuThue || "N/A"}</td>
+              <td>${roomType.TenLoaiPhong || "N/A"}</td>
+              <td>${bookingDetail.SoPhong || "N/A"}</td>
+              <td>${bookingDetail.NgayBD ? new Date(bookingDetail.NgayBD).toLocaleDateString("vi-VN") : "N/A"}</td>
+              <td>${bookingDetail.NgayKT ? new Date(bookingDetail.NgayKT).toLocaleDateString("vi-VN") : "N/A"}</td>
+              <td>${parseFloat(roomType.GiaNgay || 0).toLocaleString("vi-VN")}</td>
+              <td>${parseFloat(bookingDetail.TienPhong || 0).toLocaleString("vi-VN")}</td>
+            </tr>
+                   
+            <tr style="background-color: #6b3fa4; color: white">
+              <td colspan="6">THUẾ VAT (VND): 10%</td>
+              <td>${(bookingDetail.TienPhong * 0.1).toLocaleString("vi-VN")}</td>
+            </tr>
+            <tr style="background-color: #6b3fa4; color: white">
+              <td colspan="6">TỔNG TIỀN HOÀN THUÊ PHÒNG (VND)</td>
+              <td>${(bookingDetail.TienPhong * 1.1).toLocaleString("vi-VN")}</td>
+            </tr>
+          </table>
+
+          <p>
+            Cảm ơn Quý khách đã sử dụng dịch vụ tại The Royal Hotel. Chúc Quý khách một kỳ nghỉ vui vẻ!
+          </p>
+        </body>
+      </html>
+      `;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: customerData.email,
+        subject: subject,
+        html: htmlTemplate,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return false;
+    }
+  };
+
+  static sendCancelServiceEmailWithHTMLTemplate = async (subject, customerData, serviceDetail) => {
+    try {
+      const service = await ServiceService.getServiceById(serviceDetail.MaDV);
+
+      // Tạo template HTML
+      const htmlTemplate = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>The Royal Hotel</title>
+        <style>
+          body { font-family: Arial, sans-serif; }
+          table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+          th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+          th { background-color: #6b3fa4; color: white; }
+          .purple-text { color: #6b3fa4; }
+          h1, h2 { color: #333; }
+          .failed { color: red; }
+        </style>
+      </head>
+      <body>
+        <div>
+          <h1>THE ROYAL HOTEL</h1>
+          <p>The Royal Hotel Hồ Chí Minh</p>
+          <p>11 Đ. Sư Vạn Hạnh, Phường 12, Quận 10, Hồ Chí Minh</p>
+        </div>
+
+        <h1 class="purple-text">XÁC NHẬN HỦY ĐẶT DỊCH VỤ</h1>
+
+        <h2>Thông tin khách hàng</h2>
+        <table>
+          <tr><th>Họ tên</th><td>${customerData.fullname}</td></tr>
+          <tr><th>Email</th><td>${customerData.email}</td></tr>
+          <tr><th>Số điện thoại</th><td>${customerData.phone}</td></tr>
+        </table>
+
+        <h2>Chi tiết hủy đặt dịch vụ</h2>
+
+        <table>
+          <tr>
+            <th>Mã đặt dịch vụ</th>
+            <th>Dịch vụ</th>
+            <th>Ngày áp dụng</th>
+            <th>Số lượng</th>
+            <th>Đơn giá (VND)</th>   
+            <th>Thành tiền (VND)</th>
+          </tr> 
+
+          <tr>
+            <td>${serviceDetail.MaCTSDDV || "N/A"}</td>
+            <td>${service.TenDV || "N/A"}</td>
+            <td>${serviceDetail.NgayApDung ? new Date(serviceDetail.NgayApDung).toLocaleDateString("vi-VN") : "N/A"}</td>
+            <td>${serviceDetail.SL || "N/A"}</td>
+            <td>${parseFloat(service.Gia || 0).toLocaleString("vi-VN")}</td>
+            <td>${(serviceDetail.ThanhTien || 0).toLocaleString("vi-VN")}</td>
+          </tr> 
+
+          <tr style="background-color: #6b3fa4; color: white">
+            <td colspan="5">THUẾ VAT (VND): 10%</td>
+            <td>${(serviceDetail.ThanhTien * 0.1).toLocaleString("vi-VN")}</td>
+          </tr>
+          <tr style="background-color: #6b3fa4; color: white">
+            <td colspan="5">TỔNG TIỀN HOÀN DỊCH VỤ (VND)</td>
+            <td>${(serviceDetail.ThanhTien * 1.1).toLocaleString("vi-VN")}</td>
+          </tr>
+        </table>
+
+        <p>
+          Cảm ơn Quý khách đã sử dụng dịch vụ tại The Royal Hotel. Chúc Quý khách một kỳ nghỉ vui vẻ!
+        </p>
+      </body>
+    </html>
+    `;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: customerData.email,
         subject: subject,
         html: htmlTemplate,
       });

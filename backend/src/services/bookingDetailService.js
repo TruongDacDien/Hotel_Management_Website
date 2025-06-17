@@ -5,8 +5,8 @@ class BookingDetailService {
     return await BookingDetail.getAll();
   }
 
-  static async getById(bookingId, roomId) {
-    const result = await BookingDetail.getById(bookingId, roomId);
+  static async getById(bookingDetailId) {
+    const result = await BookingDetail.getById(bookingDetailId);
     if (!result) throw new Error('Booking detail not found');
     return result;
   }
@@ -32,16 +32,22 @@ class BookingDetailService {
     return await BookingDetail.updateCheckOut(bookingDetailId, text);
   }
 
-  static async updateStatus(bookingDetailId, status) {
-    if (!bookingDetailId || !status) {
+  static async updatePaymentStatus(bookingDetailId, status, isPaid, paymentMethod) {
+    if (!bookingDetailId || !status || isPaid === null || !paymentMethod) {
       throw new Error('Missing data');
     }
-    return await BookingDetail.updateStatus(bookingDetailId, status);
+    return await BookingDetail.updatePaymentStatus(bookingDetailId, status, isPaid, paymentMethod);
   }
 
-  static async delete(bookingId, roomId) {
-    await this.getById(bookingId, roomId); // Check existence
-    return await BookingDetail.delete(bookingId, roomId);
+  static async cancelBookingDetail(bookingDetailId){
+    if(!bookingDetailId){
+      throw new Error('Missing data');
+    }
+    return await BookingDetail.cancelBookingDetail(bookingDetailId);
+  }
+
+  static async delete(bookingDetailId) {
+    return await BookingDetail.delete(bookingDetailId);
   }
 }
 

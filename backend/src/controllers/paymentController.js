@@ -4,6 +4,7 @@ import EmailController from "./emailController.js";
 import BookingService from "../services/bookingService.js";
 import ServiceService from "../services/serviceService.js";
 import RoomTypeService from "../services/roomTypeService.js";
+import EmailService from "../services/emailService.js";
 
 class PaymentController {
   createPaymentLink = expressAsyncHandler(async (req, res) => {
@@ -12,93 +13,54 @@ class PaymentController {
     const bookingData = req.bookingData;
 
     try {
-      // Gọi BookingService.customerOrder để xử lý đặt phòng và dịch vụ
-      const orderResult = await BookingService.customerOrder(bookingData);
-      console.log("Order result:", orderResult); // Log kết quả order
-      // Lấy thông tin loại phòng và dịch vụ
-      const roomTypePromises = orderResult.roomResults.map(async (result) => {
-        if (result.roomTypeId) {
-          const roomType = await RoomTypeService.getById(result.roomTypeId);
-          return {
-            ...result,
-            TenLoaiPhong: roomType?.TenLoaiPhong || "Unknown",
-          };
-        }
-        return result;
-      });
-
-      const servicePromises = orderResult.serviceResults.map(async (result) => {
-        if (result.serviceId) {
-          const service = await ServiceService.getServiceById(result.serviceId);
-          return {
-            ...result,
-            TenDV: service?.TenDV || "Unknown",
-            Gia: service?.Gia || 0,
-          };
-        }
-        return result;
-      });
-
-      const enrichedRoomResults = await Promise.all(roomTypePromises);
-      const enrichedServiceResults = await Promise.all(servicePromises);
-
       // Tạo danh sách items cho PayOS
       const items = [];
 
-      // Thêm phòng vào items
-      enrichedRoomResults.forEach((result) => {
-        if (result.bookings && result.bookings.length > 0) {
-          result.bookings.forEach((booking) => {
-            if (booking.bookingDetail) {
-              items.push({
-                name: `${result.TenLoaiPhong} (${booking.bookingDetail.SoPhong})`,
-                quantity: 1, // Mỗi booking đại diện cho 1 phòng
-                price: parseFloat(booking.bookingDetail.TienPhong),
-              });
-            }
-          });
-        }
-      });
+      // Tổng tiền phòng + dịch vụ trước thuế
+      let totalPrice = 0;
+
+      // Thêm loại phòng vào items
+      for (const roomRequest of bookingData.roomRequests) {
+        const roomType = await RoomTypeService.getById(roomRequest.roomTypeId);
+        const start = new Date(roomRequest.startDay);
+        const end = new Date(roomRequest.endDay);
+        const diffTime = end - start;
+        const numNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const roomTotal = numNights * roomRequest.numberOfRooms * roomType.GiaNgay;
+        items.push({
+          name: roomType.TenLoaiPhong,
+          quantity: roomRequest.numberOfRooms,
+          price: parseFloat(roomTotal),
+        });
+        totalPrice += roomTotal;
+      }
 
       // Thêm dịch vụ vào items
-      enrichedServiceResults.forEach((result) => {
-        if (result.bookedServices > 0) {
-          items.push({
-            name: result.TenDV,
-            quantity: result.bookedServices,
-            price: parseFloat(result.Gia),
-          });
-        }
-      });
+      for (const serviceRequest of bookingData.serviceRequests) {
+        const service = await ServiceService.getServiceById(serviceRequest.serviceId);
+        const serviceTotal = service.Gia * serviceRequest.quantity;
+        items.push({
+          name: service.TenDV,
+          quantity: serviceRequest.quantity,
+          price: parseFloat(serviceTotal),
+        });
+        totalPrice += serviceTotal;
+      }
 
-      // Tính tổng tiền
-      const totalRoomMoney = enrichedRoomResults.reduce((sum, result) => {
-        return (
-          sum +
-          result.bookings.reduce((roomSum, booking) => {
-            return roomSum + (parseFloat(booking.bookingDetail?.TienPhong) || 0);
-          }, 0)
-        );
-      }, 0);
+      // Tính và thêm thuế VAT (10%)
+      const tax = Math.round(totalPrice * 0.1); // Làm tròn để tránh số lẻ
 
-      const totalRoomTax = (totalRoomMoney * 10) / 100;
-
-      const totalServiceMoney = enrichedServiceResults.reduce((sum, result) => {
-        return sum + (result.totalMoney || 0);
-      }, 0);
-
-      const totalServiceTax = (totalServiceMoney * 10) / 100;
-
-      const amount = Math.round(totalRoomMoney + totalRoomTax + totalServiceMoney + totalServiceTax);
-
-      //Thêm thuế vào items
+      // Thêm thuế vào items
       items.push({
         name: "Thuế VAT",
         quantity: 1,
-        price: Math.round(totalRoomTax + totalServiceTax),
+        price: tax,
       });
 
-      //Tạo orderCode
+      // Tổng tiền sau thuế
+      const amount = Math.round(totalPrice + tax);
+
+      // Tạo orderCode
       const generateSafeOrderCode = () => {
         const timestamp = Date.now(); // số ms từ 1970, hiện tại là khoảng 13 chữ số
         const random = Math.floor(Math.random() * 100000); // 5 chữ số
@@ -117,9 +79,9 @@ class PaymentController {
           cancelUrl: "http://localhost:5173/cart",
           returnUrl: "http://localhost:5173/cart",
         },
-        { ...bookingData, orderResult }
+        bookingData
       );
-      
+
       return res.json({
         error: 0,
         message: "Success",
@@ -139,66 +101,6 @@ class PaymentController {
       return res.json({
         error: -1,
         message: "fail",
-        data: null,
-      });
-    }
-  });
-
-  updateBookingStatusFromReturn = expressAsyncHandler(async (req, res) => {
-    try {
-      const { orderCode, status } = req.body;
-      if (!orderCode || !status) {
-        return res.status(400).json({
-          error: -1,
-          message: "Missing orderCode or status",
-        });
-      }
-
-      await PaymentService.updateBookingStatus(status, orderCode);
-      return res.json({
-        error: 0,
-        message: "Booking status updated successfully",
-      });
-    } catch (error) {
-      console.error("Error in updateBookingStatusFromReturn:", error);
-      return res.status(500).json({
-        error: -1,
-        message: "Internal server error",
-      });
-    }
-  });
-
-  getBookingStatus = expressAsyncHandler(async (req, res) => {
-    try {
-      const { orderCode } = req.params;
-      if (!orderCode) {
-        return res.status(400).json({
-          error: -1,
-          message: "Missing orderCode",
-          data: null,
-        });
-      }
-
-      const bookingData = await PaymentService.getBookingStatus(orderCode);
-
-      if (!bookingData) {
-        return res.status(404).json({
-          error: -1,
-          message: "Booking not found",
-          data: null,
-        });
-      }
-
-      return res.json({
-        error: 0,
-        message: "Success",
-        data: bookingData,
-      });
-    } catch (error) {
-      console.error("Error in getBookingStatus:", error);
-      return res.status(500).json({
-        error: -1,
-        message: "Internal server error",
         data: null,
       });
     }
@@ -243,9 +145,10 @@ class PaymentController {
     // Xử lý webhook
     const { data } = webhookData;
     console.log("Processing webhook with orderCode:", data.orderCode);
-    if (data.desc === "success") {
-      const bookingResult = await PaymentService.getPendingBooking(data.orderCode);
-      if (!bookingResult) {
+    if (webhookData.success === true) {
+      const _bookingData = await PaymentService.getPendingBooking(data.orderCode);
+      console.log("Dữ liệu booking lấy từ pending:", _bookingData);
+      if (!_bookingData) {
         return res.status(400).json({
           error: -1,
           message: "Booking data not found",
@@ -255,23 +158,19 @@ class PaymentController {
 
       try {
         console.log("Attempting to send booking confirmation email...");
-        const fakeReq = {
-          body: {
-            isOnline: bookingResult.isOnline,
-            fullName: bookingResult.fullName,
-            email: bookingResult.email,
-            phone: bookingResult.phone,
-            roomRequests: bookingResult.roomRequests,
-            serviceRequests: bookingResult.serviceRequests,
-            bookingResult: bookingResult.orderResult,
-          },
+        const bookingData = {
+          isOnline: _bookingData.isOnline,
+          fullName: _bookingData.fullName,
+          email: _bookingData.email,
+          phone: _bookingData.phone,
+          roomRequests: _bookingData.roomRequests,
+          serviceRequests: _bookingData.serviceRequests,
         };
-        const result = await EmailController.sendBookingConfirmation(fakeReq);
-        //await PaymentService.deletePendingBooking(data.orderCode);
+        const result = await EmailService.sendBookingConfirmationByData(bookingData);
         return res.json({
           error: 0,
           message: "Webhook processed successfully",
-          data: result.data,
+          data: result,
         });
       } catch (error) {
         console.error("Error processing webhook:", error);
@@ -290,6 +189,25 @@ class PaymentController {
       data: null,
     });
   });
+
+  deletePendingBooking = expressAsyncHandler(async (req, res) => {
+    const { orderCode } = req.params;
+
+    if (!orderCode) {
+      return res.status(400).json({ msg: "Missing orderCode" });
+    }
+
+    try {
+      const deleted = await PaymentService.deletePendingBooking(orderCode);
+      if (deleted) {
+        return res.status(200).json({ msg: "Deleted successfully" });
+      } else {
+        return res.status(404).json({ msg: "Order not found" });
+      }
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  })
 
   getPaymentLinkInfo = expressAsyncHandler(async (req, res) => {
     try {

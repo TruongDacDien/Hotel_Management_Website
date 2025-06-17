@@ -130,54 +130,19 @@ class EmailController {
     });
   });
 
-  sendBookingConfirmation = expressAsyncHandler(async (req, res, next) => {
+  sendBookingConfirmation = expressAsyncHandler(async (req, res) => {
     const bookingData = {
-      isOnline: req.body.isOnline,
-      fullName: req.body.fullName,
-      email: req.body.email,
-      phone: req.body.phone,
-      roomRequests: req.body.roomRequests || [], // Mảng yêu cầu: [{ roomTypeId, numberOfRooms, startDay, endDay }, ...]
-      serviceRequests: req.body.serviceRequests || [] // Mảng yêu cầu: [{ serviceId, quantity, offeredDate }, ...]
+      ...req.body,
+      roomRequests: req.body.roomRequests || [],
+      serviceRequests: req.body.serviceRequests || [],
     };
 
-    const bookingResult = req.body.bookingResult;
-
-    if (
-      !bookingData.fullName ||
-      !bookingData.email ||
-      !bookingData.phone ||
-      (bookingData.roomRequests.length === 0 && bookingData.serviceRequests.length === 0)
-    ) {
-      return res
-        .status(400)
-        .json({ msg: "Missing required fields or room requests" });
-    }
-
-    let result;
-    if (bookingData.isOnline === false) {
-      // Gọi BookingService.customerorder để xử lý đặt phòng và dịch vụ 
-      result = await BookingService.customerOrder(bookingData);
-    } else {
-      result = bookingResult;
-    }
-
-
-    // Gửi email xác nhận
-    const emailSent = await EmailService.sendEmailWithHTMLTemplate(
-      bookingData.email,
-      "Xác nhận đặt phòng và dịch vụ - The Royal Hotel",
-      { ...bookingData, ...result }
-    );
-
-    if (!emailSent) {
-      throw new Error("Failed to send confirmation email");
-    }
-
-    return {
-      success: result.success,
-      msg: "Booking processed and confirmation email sent successfully!",
+    const result = await EmailService.sendBookingConfirmationByData(bookingData);
+    return res.status(200).json({
+      success: true,
+      msg: "Đặt phòng và dịch vụ thành công - Email xác nhận đã được gửi.",
       data: result,
-    };
+    });
   });
 }
 

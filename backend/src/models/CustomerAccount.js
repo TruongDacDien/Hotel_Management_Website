@@ -59,7 +59,7 @@ class CustomerAccount {
           username,
           hashPassword,
           email,
-          "user_default_m4o3wc",
+          "hotel_management/user_default_m4o3wc",
           "https://res.cloudinary.com/dzaoyffio/image/upload/v1747814352/user_default_m4o3wc.png",
           customerId,
         ]

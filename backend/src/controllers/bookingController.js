@@ -1,5 +1,6 @@
 import expressAsyncHandler from "express-async-handler";
 import BookingService from "../services/bookingService.js";
+import BookingDetailService from "../services/bookingDetailService.js";
 
 class BookingController {
   getAll = expressAsyncHandler(async (req, res) => {
