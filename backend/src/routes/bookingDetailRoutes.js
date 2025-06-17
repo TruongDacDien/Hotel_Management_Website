@@ -9,5 +9,6 @@ router.post('/', bookingDetailController.create);
 router.put('/checkIn', bookingDetailController.updateCheckIn);
 router.put('/checkOut', bookingDetailController.updateCheckOut);
 router.delete('/:bookingId/:roomId', bookingDetailController.delete);
+router.put('/cancel', bookingDetailController.cancelBookingUsageDetail);
 
 export default router;

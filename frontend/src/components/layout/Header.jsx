@@ -79,7 +79,7 @@ export default function Header() {
           {" "}
           {/* 🔄 `to` thay vì `href` */}
           <div className="flex items-center cursor-pointer">
-            <span className="text-primary text-4xl font-bold">Hotel</span>
+            <span className="text-primary text-4xl font-bold">The Loyal Hotel</span>
           </div>
         </Link>
 

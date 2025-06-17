@@ -94,7 +94,7 @@ app.use((err, req, res, next) => {
 });
 
 // Hàm xác nhận webhook khi backend khởi động
-const base_url="https://fd00-14-187-41-206.ngrok-free.app"; //Chạy ngrok http 5000
+const base_url="https://4da0-14-187-41-206.ngrok-free.app"; //Chạy ngrok http 5000
 async function confirmWebhookOnStartup() {
   try {
     const result = await payOS.confirmWebhook(`${base_url}/api/payment/webhook`);

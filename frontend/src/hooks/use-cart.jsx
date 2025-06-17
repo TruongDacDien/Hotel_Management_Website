@@ -11,18 +11,24 @@ export function CartProvider({ children }) {
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-    if (savedCart) {
-      try {
-        console.log("Found cart in localStorage:", savedCart);
-        setItems(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Failed to parse cart from localStorage", e);
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status !== "PAID") {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        try {
+          console.log("Found cart in localStorage:", savedCart);
+          setItems(JSON.parse(savedCart));
+        } catch (e) {
+          console.error("Failed to parse cart from localStorage", e);
+        }
+      } else {
+        console.warn("No cart found in localStorage after reload");
       }
     } else {
-      console.warn("No cart found in localStorage after reload");
+      console.log("Status is PAID, skipping cart restoration");
+      localStorage.removeItem(CART_STORAGE_KEY); // Đảm bảo xóa localStorage
     }
-
     setIsLoaded(true);
   }, []);
 
@@ -117,6 +123,7 @@ export function CartProvider({ children }) {
   const clearCart = () => {
     saveSnapshot();
     setItems([]);
+    localStorage.removeItem(CART_STORAGE_KEY); // Xóa dữ liệu trong localStorage
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);

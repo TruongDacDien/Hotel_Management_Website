@@ -16,13 +16,10 @@ router.post(
   checkOrderRequestComingFromFrontend,
   paymentController.createPaymentLink
 );
-
 router.get("/:orderId", paymentController.getPaymentLinkInfo);
 router.put("/:orderId", paymentController.cancelPaymentLink);
 router.post("/confirm-webhook", paymentController.confirmWebhook);
 router.post("/webhook", paymentController.handleWebhook);
-router.post("/update-status", paymentController.updateBookingStatusFromReturn);
-router.get("/status/:orderCode", paymentController.getBookingStatus);
-
+router.delete("/:orderCode", paymentController.deletePendingBooking);
 
 export default router;

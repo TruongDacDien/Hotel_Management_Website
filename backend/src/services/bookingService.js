@@ -112,11 +112,19 @@ class BookingService {
             });
         }
 
+        // Xử lý thanh toán đặt phòng online hoặc trực tiếp
         if (bookingData.isOnline === true) {
             for (const roomResult of roomResults) {
                 for (const booking of roomResult.bookings) {
                     console.log("==> booking.MaCTPT:", booking.bookingDetail?.MaCTPT);
-                    await BookingDetailService.updateStatus(booking.bookingDetail.MaCTPT, "Đã thanh toán online");
+                    await BookingDetailService.updatePaymentStatus(booking.bookingDetail.MaCTPT, "Phòng đã đặt", true, "Online");
+                }
+            }
+        }else{
+            for (const roomResult of roomResults) {
+                for (const booking of roomResult.bookings) {
+                    console.log("==> booking.MaCTPT:", booking.bookingDetail?.MaCTPT);
+                    await BookingDetailService.updatePaymentStatus(booking.bookingDetail.MaCTPT, "Phòng đã đặt", false, "Direct");
                 }
             }
         }
@@ -188,6 +196,23 @@ class BookingService {
                     ? `Với dịch vụ ${serviceId} vào ngày ${offeredDate}: Đã đặt ${servicesToBook} dịch vụ, đặt không thành công ${failedServices} dịch vụ vì không còn đủ dịch vụ.`
                     : `Với dịch vụ ${serviceId} vào ngày ${offeredDate}: Đã đặt thành công ${servicesToBook} dịch vụ.`,
             });
+        }
+
+        // Xử lý thanh toán đặt dịch vụ online hoặc trực tiếp
+        if (bookingData.isOnline === true) {
+            for (const serviceResult of serviceResults) {
+                for (const service of serviceResult.services) {
+                    console.log("==> service.MaCTSDDV:", service?.MaCTSDDV);
+                    await ServiceUsageDetailService.updatePaymentStatus(service.MaCTSDDV, "Dịch vụ đã đặt", true, "Online");
+                }
+            }
+        }else{
+            for (const serviceResult of serviceResults) {
+                for (const service of serviceResult.services) {
+                    console.log("==> service.MaCTSDDV:", service?.MaCTSDDV);
+                    await ServiceUsageDetailService.updatePaymentStatus(service.MaCTSDDV, "Dịch vụ đã đặt", false, "Direct");
+                }
+            }
         }
 
         // Tạo phản hồi tổng thể

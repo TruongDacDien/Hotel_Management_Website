@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
@@ -45,6 +45,7 @@ import { Separator } from "../../components/ui/separator";
 import {
   createOrder,
   createPayment,
+  deletePendingBooking,
   sendBookingToEmail,
 } from "../../config/api";
 import { useSearchParams } from "react-router-dom";
@@ -100,38 +101,25 @@ export default function CartPage() {
   }, [items, form]);
 
   const [searchParams] = useSearchParams();
-  const [hasUpdatedStatus, setHasUpdatedStatus] = useState(false);
   const status = searchParams.get("status");
   const orderCode = searchParams.get("orderCode");
+  const hasUpdatedStatusRef = useRef(false);
+
   useEffect(() => {
-    if (!hasUpdatedStatus && status && orderCode) {
-      setHasUpdatedStatus(true);
-      axios.post(`/payment/update-status`, {
-        status,
-        orderCode,
-      })
-        .then((res) => {
-          console.log("Cập nhật trạng thái thành công", res.data);
-          if (status === "PAID") {
-            if (undoTimer) {
-              clearTimeout(undoTimer);
-            }
-            clearSnapshots();
-            setBookingComplete(true);
-            clearCart(); // chỉ xóa nếu đã thanh toán thành công
-            toast({ title: "Thanh toán thành công! Đã đặt chỗ." });
-          } else if (status === "CANCELLED") {
-            toast({
-              title: "Thanh toán đã bị hủy.",
-              variant: "destructive",
-            });
-          }
-        })
-        .catch((err) => {
-          console.error("Lỗi khi cập nhật trạng thái:", err);
-        });
+    if (!hasUpdatedStatusRef.current && status && orderCode) {
+      hasUpdatedStatusRef.current = true;
+      if (status === "PAID") {
+        clearSnapshots();
+        setBookingComplete(true);
+        clearCart();
+        toast({ title: "Thanh toán thành công! Đã đặt chỗ." });
+        deletePendingBooking(orderCode);
+      } else if (status === "CANCELLED") {
+        toast({ title: "Thanh toán đã bị hủy.", variant: "destructive" });
+        deletePendingBooking(orderCode);
+      }
     }
-  }, [status, orderCode, hasUpdatedStatus, clearCart, toast]);
+  }, [status, orderCode, clearCart, clearSnapshots, toast]);
 
   const handleQuantityChange = (id, quantity) => {
     updateQuantity(id, quantity); // dùng hàm từ context
@@ -200,8 +188,7 @@ export default function CartPage() {
         isOnline: false,
       };
       console.log("Booking data prepared:", bookingData);
-      const res = await createOrder(bookingData);
-      return res.data;
+      return bookingData;
     },
     onSuccess: async (_, variables) => {
       if (undoTimer) {

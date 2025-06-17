@@ -155,6 +155,10 @@ export const createPayment = async ({
   });
 };
 
+export const deletePendingBooking = async (orderCode) => {
+  return axios.delete(`/payment/${orderCode}`);
+};
+
 export const createPromotion = async (formData) => {
   return await axios.post(`/promotion`, { ...formData });
 };
