@@ -25,64 +25,11 @@ import {
   updateCustomerAccountById,
   getHistoryBookingByCustomerId,
   getServiceById,
+  cancelBooking,
+  cancelService,
 } from "../../config/api";
 import defaultAvatar from "../../assets/avatar-default.svg";
 import EditProfileModal from "./EditProfile";
-
-const mockBookings = [
-  // Booking confirmed - room
-  {
-    id: 1,
-    name: "Nguyen Van A",
-    email: "a@example.com",
-    phone: "0123456789",
-    status: "confirmed",
-    checkIn: "2025-05-01",
-    checkOut: "2025-05-05",
-    totalPrice: 250,
-    notes: "Need extra pillows",
-    roomId: 101,
-  },
-  // Booking pending - service
-  {
-    id: 2,
-    name: "Nguyen Van A",
-    email: "a@example.com",
-    phone: "0123456789",
-    status: "pending",
-    serviceDate: "2025-05-10",
-    serviceTime: "14:00",
-    totalPrice: 50,
-    notes: "",
-    serviceId: 201,
-  },
-  // Booking cancelled - room
-  {
-    id: 3,
-    name: "Nguyen Van A",
-    email: "a@example.com",
-    phone: "0123456789",
-    status: "cancelled",
-    checkIn: "2025-04-01",
-    checkOut: "2025-04-03",
-    totalPrice: 180,
-    notes: "Late check-in",
-    roomId: 102,
-  },
-  // Booking confirmed - service
-  {
-    id: 4,
-    name: "Nguyen Van A",
-    email: "a@example.com",
-    phone: "0123456789",
-    status: "confirmed",
-    serviceDate: "2025-05-15",
-    serviceTime: "09:00",
-    totalPrice: 100,
-    notes: "Massage and spa",
-    serviceId: 202,
-  },
-];
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -121,6 +68,57 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState("profile");
   const [showModal, setShowModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+
+  const handleRequestCancel = (booking, loai) => {
+    setSelectedBooking({ ...booking, loai }); // loai = 'room' | 'service'
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      if (selectedBooking.loai === "room") {
+        await cancelBooking({
+          bookingDetailId: selectedBooking.MaCTPT,
+          fullname: userInfor.TenKH,
+          email: userInfor.Email,
+          phone: userInfor.SDT,
+        });
+      } else {
+        await cancelService({
+          serviceUsageDetailId: selectedBooking.MaCTSDDV,
+          fullname: userInfor.TenKH,
+          email: userInfor.Email,
+          phone: userInfor.SDT,
+        });
+      }
+
+      toast({ title: "Huỷ thành công." });
+
+      const res = await getHistoryBookingByCustomerId(userInfor.MaKH);
+      const sortedBookings = res.bookings.sort(
+        (a, b) =>
+          new Date(b.NgayBD.replace(" ", "T")) -
+          new Date(a.NgayBD.replace(" ", "T"))
+      );
+
+      // Sắp xếp Services theo NgayApDung (mới → cũ)
+      const sortedServices = res.services.sort(
+        (a, b) =>
+          new Date(b.NgayApDung.replace(" ", "T")) -
+          new Date(a.NgayApDung.replace(" ", "T"))
+      );
+
+      setBookings(sortedBookings);
+      setServices(sortedServices);
+      setShowCancelModal(false);
+    } catch (err) {
+      const errorMessage =
+        err?.response?.data?.message || err.message || "Huỷ thất bại";
+      toast({ title: errorMessage, variant: "destructive" });
+    }
+  };
 
   //   const { data: bookings = [], isLoading: isLoadingBookings } = useQuery({
   //     queryKey: ["/api/user/bookings"],
@@ -139,8 +137,21 @@ export default function ProfilePage() {
         const res = await getHistoryBookingByCustomerId(userInfor.MaKH);
         console.log(res);
 
-        setBookings(res.bookings);
-        setServices(res.services);
+        const sortedBookings = res.bookings.sort(
+          (a, b) =>
+            new Date(b.NgayBD.replace(" ", "T")) -
+            new Date(a.NgayBD.replace(" ", "T"))
+        );
+
+        // Sắp xếp Services theo NgayApDung (mới → cũ)
+        const sortedServices = res.services.sort(
+          (a, b) =>
+            new Date(b.NgayApDung.replace(" ", "T")) -
+            new Date(a.NgayApDung.replace(" ", "T"))
+        );
+
+        setBookings(sortedBookings);
+        setServices(sortedServices);
       } catch (err) {
         console.error("Failed to fetch booking history:", err);
       } finally {
@@ -195,6 +206,7 @@ export default function ProfilePage() {
   useEffect(() => {
     console.log("Bookings:", bookings);
     console.log("Services:", services);
+    console.log(userInfor);
   }, [bookings, services]);
 
   // thêm state để lưu mapping
@@ -343,8 +355,12 @@ export default function ProfilePage() {
                   ) : bookings && bookings.length > 0 ? (
                     <>
                       <div className="space-y-6">
-                        {displayedRooms.map((booking) => (
-                          <BookingItem key={booking.id} booking={booking} />
+                        {displayedRooms.map((booking, index) => (
+                          <BookingItem
+                            key={index}
+                            booking={booking}
+                            onCancelRequest={handleRequestCancel}
+                          />
                         ))}
                       </div>
                       <div className="flex justify-center mt-4 gap-2">
@@ -403,6 +419,7 @@ export default function ProfilePage() {
                             key={index}
                             service={service}
                             serviceName={serviceNames[service.MaDV]}
+                            onCancelRequest={handleRequestCancel}
                           />
                         ))}
                       </div>
@@ -454,12 +471,43 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {showCancelModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">Xác nhận huỷ</h3>
+
+              <p className="text-muted-foreground mb-6">
+                {selectedBooking?.loai === "room"
+                  ? `Bạn chắc chắn muốn huỷ đặt phòng số ${selectedBooking?.SoPhong}?`
+                  : `Bạn chắc chắn muốn huỷ dịch vụ "${
+                      serviceNames[selectedBooking?.MaDV]
+                    }" vào ngày ${format(
+                      new Date(selectedBooking?.NgayApDung),
+                      "dd/MM/yyyy"
+                    )}?`}
+              </p>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCancelModal(false)}
+                >
+                  Đóng
+                </Button>
+                <Button variant="destructive" onClick={handleConfirmCancel}>
+                  Xác nhận huỷ
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Tabs>
     </div>
   );
 }
 
-function BookingItem({ booking }) {
+function BookingItem({ booking, onCancelRequest }) {
   const isRoomBooking = booking.roomId && !booking.serviceId;
   const formattedTotal = booking.TienPhong
     ? Number(booking.TienPhong).toLocaleString("vi-VN") + " VNĐ"
@@ -470,10 +518,22 @@ function BookingItem({ booking }) {
       <div className="p-6">
         <div className="flex flex-col md:flex-row justify-between mb-4">
           <div className="mt-2 md:mt-0">
+            {booking.TinhTrangThue?.toLowerCase().includes("hủy") && (
+              <Badge variant="outline">{booking.TinhTrangThue}</Badge>
+            )}
             <Badge
               variant={booking.status === "confirmed" ? "default" : "outline"}
             >
-              {booking.TinhTrangThue}
+              {booking.DaThanhToan ? "Đã thanh toán" : "Chưa thanh toán"}
+            </Badge>
+            <Badge
+              variant={booking.status === "confirmed" ? "default" : "outline"}
+            >
+              {booking.HinhThucThanhToan === "Online"
+                ? "Online"
+                : booking.HinhThucThanhToan === "Direct"
+                ? "Trực tiếp"
+                : booking.HinhThucThanhToan}
             </Badge>
           </div>
         </div>
@@ -540,32 +600,82 @@ function BookingItem({ booking }) {
             </div>
           </div>
         </div>
+
+        {new Date() < new Date(booking.NgayBD) &&
+          !booking.TinhTrangThue?.toLowerCase().includes("hủy") && (
+            <div className="mt-4">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => onCancelRequest(booking, "room")}
+              >
+                Huỷ đặt phòng
+              </Button>
+            </div>
+          )}
       </div>
     </Card>
   );
 }
 
-function ServiceItem({ service, serviceName }) {
+function ServiceItem({ service, serviceName, onCancelRequest }) {
   return (
-    <Card className="p-4">
-      <p className="text-sm">
-        Dịch vụ: <strong>{serviceName || "Đang tải..."}</strong>
-      </p>
-      <p className="text-sm">
-        Ngày sử dụng:{" "}
-        <strong>
-          {service.NgayApDung
-            ? format(new Date(service.NgayApDung), "dd/MM/yyyy")
+    <Card className="p-4 space-y-2 text-sm">
+      {/* Header badges */}
+      <div className="flex flex-wrap gap-2 mb-2">
+        {service.TrangThai?.toLowerCase().includes("hủy") && (
+          <Badge variant="destructive">{service.TrangThai}</Badge>
+        )}
+        <Badge variant={service.status === "confirmed" ? "default" : "outline"}>
+          {service.DaThanhToan ? "Đã thanh toán" : "Chưa thanh toán"}
+        </Badge>
+        <Badge variant={service.status === "confirmed" ? "default" : "outline"}>
+          {service.HinhThucThanhToan === "Online"
+            ? "Online"
+            : service.HinhThucThanhToan === "Direct"
+            ? "Trực tiếp"
+            : "Không rõ"}
+        </Badge>
+      </div>
+
+      {/* Service Info */}
+      <div className="space-y-1 leading-snug">
+        <p>
+          <span className="font-medium">Dịch vụ:</span>{" "}
+          <strong>{serviceName || "Đang tải..."}</strong>
+        </p>
+        <p>
+          <span className="font-medium">Ngày sử dụng:</span>{" "}
+          <strong>
+            {service.NgayApDung
+              ? format(new Date(service.NgayApDung), "dd/MM/yyyy")
+              : "N/A"}
+          </strong>
+        </p>
+        <p>
+          <span className="font-medium">Số lượng:</span> {service.SL || "N/A"}
+        </p>
+        <p>
+          <span className="font-medium">Thành tiền:</span>{" "}
+          {service.ThanhTien
+            ? Number(service.ThanhTien).toLocaleString("vi-VN") + " VNĐ"
             : "N/A"}
-        </strong>
-      </p>
-      <p className="text-sm">Số lượng: {service.SL || "N/A"}</p>
-      <p className="text-sm">
-        Thành tiền:{" "}
-        {service.ThanhTien
-          ? Number(service.ThanhTien).toLocaleString("vi-VN") + " VNĐ"
-          : "N/A"}
-      </p>
+        </p>
+      </div>
+
+      {/* Cancel Button */}
+      {new Date() < new Date(service.NgayApDung) &&
+        !service.TrangThai?.toLowerCase().includes("hủy") && (
+          <div className="pt-3">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onCancelRequest(service, "service")}
+            >
+              Huỷ dịch vụ
+            </Button>
+          </div>
+        )}
     </Card>
   );
 }

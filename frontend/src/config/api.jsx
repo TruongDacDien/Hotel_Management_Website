@@ -159,37 +159,10 @@ export const deletePendingBooking = async (orderCode) => {
   return axios.delete(`/payment/${orderCode}`);
 };
 
-export const createPromotion = async (formData) => {
-  return await axios.post(`/promotion`, { ...formData });
-};
-export const getCurrentPro = async (date) => {
-  return await axios.get(`/promotion`, { params: { date } });
-};
-export const updatePro = async (id) => {
-  return await axios.patch(`/promotion/${id}`);
-};
-export const deletePro = async (id) => {
-  return await axios.delete(`/promotion/${id}`);
+export const cancelService = async (data) => {
+  return await axios.put(`serviceUsageDetails/cancel`, data);
 };
 
-export const getProById = async (id) => {
-  return await axios.get(`/promotion/${id}`);
-};
-
-export const getAllOrderByUserId = async () => {
-  return await axios.get(`/orders/all-order-by-userId`);
-};
-
-export const getAllPromotion = async () => {
-  return await axios.get(`/promotion/active`);
-};
-
-// point
-
-export const getCurrentPoint = async () => {
-  return await axios.get(`/loyalpoint`);
-};
-
-export const getParam = async () => {
-  return await axios.get(`/param`);
+export const cancelBooking = async (data) => {
+  return await axios.put(`bookingDetails/cancel`, data);
 };
