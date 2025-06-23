@@ -21,13 +21,14 @@ class CustomerAccountController {
   });
 
   update = expressAsyncHandler(async (req, res) => {
-    const { accountId } = req.params;
+    const { accountId } = req.params; // accountId là user_MaTKKH
     if (req.file) {
       const b64 = Buffer.from(req.file.buffer).toString("base64");
       let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-      const cldRes = await handleUploadCloudinary(dataURI);
+      // Truyền user_MaTKKH làm public_id
+      const cldRes = await handleUploadCloudinary(dataURI, `user_${accountId}`);
       req.body.avatarURL = cldRes.url;
-      req.body.avatarId = cldRes.public_id;
+      req.body.avatarId = `user_${accountId}`; // Lưu user_MaTKKH thay vì public_id
     }
     const updated = await CustomerAccountService.update(accountId, req.body);
     res.json(updated);
