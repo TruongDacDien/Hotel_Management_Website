@@ -194,7 +194,7 @@ export default function ContactPage() {
               <h2 className="text-3xl font-bold text-primary mb-6">Tìm Chúng Tôi</h2>
               <div className="aspect-video bg-neutral-200 rounded-lg overflow-hidden shadow-md">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.231171235212!2d106.80047917451817!3d10.870014157461519!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317527587e9ad5bf%3A0xafa66f9c8be3c91!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBDw7RuZyBuZ2jhu4cgVGjDtG5nIHRpbiAtIMSQSFFHIFRQLkhDTQ!5e0!3m2!1svi!2s!4v1744712997639!5m2!1svi!2s"
+                  src="https://www.google.com/maps?q=Vạn+Hạnh+Mall,+11+Sư+Vạn+Hạnh,+Phường+12,+Quận+10,+TP.HCM&output=embed"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

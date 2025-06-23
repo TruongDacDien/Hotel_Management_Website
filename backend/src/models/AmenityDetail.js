@@ -7,7 +7,9 @@ class AmenityDetail {
     static async getAll() {
         try {
             const [rows] = await this.pool.query(
-                "SELECT * FROM CT_TienNghi WHERE IsDeleted = 0"
+                `SELECT CTTN.MaCTTN, CTTN.MaTN, CTTN.MaLoaiPhong, CTTN.SL, TN.TenTN
+                FROM CT_TienNghi CTTN, TienNghi TN
+                WHERE CTTN.MaTN = TN. MaTN`
             );
             return rows;
         } catch (error) {
@@ -20,7 +22,7 @@ class AmenityDetail {
     static async getById(id) {
         try {
             const [rows] = await this.pool.query(
-                "SELECT * FROM CT_TienNghi WHERE MaCTTN = ? AND IsDeleted = 0",
+                "SELECT * FROM CT_TienNghi WHERE MaCTTN = ?",
                 [id]
             );
             if (rows.length === 0) {
@@ -37,7 +39,7 @@ class AmenityDetail {
     static async getByRoomType(roomTypeId) {
         try {
             const [rows] = await this.pool.query(
-                "SELECT * FROM CT_TienNghi WHERE MaLoaiPhong = ? AND IsDeleted = 0",
+                "SELECT * FROM CT_TienNghi WHERE MaLoaiPhong = ?",
                 [roomTypeId]
             );
             return rows;
@@ -52,7 +54,7 @@ class AmenityDetail {
         try {
             const { MaTN, MaLoaiPhong, SL, TenTN } = detailData;
             const [result] = await this.pool.query(
-                "INSERT INTO CT_TienNghi (MaTN, MaLoaiPhong, SL, TenTN, IsDeleted) VALUES (?, ?, ?, ?, 0)",
+                "INSERT INTO CT_TienNghi (MaTN, MaLoaiPhong, SL, TenTN) VALUES (?, ?, ?, ?)",
                 [MaTN, MaLoaiPhong, SL, TenTN]
             );
             return { MaCTTN: result.insertId, ...detailData };
@@ -67,7 +69,7 @@ class AmenityDetail {
         try {
             const { MaTN, MaLoaiPhong, SL, TenTN } = detailData;
             const [result] = await this.pool.query(
-                "UPDATE CT_TienNghi SET MaTN = ?, MaLoaiPhong = ?, SL = ?, TenTN = ? WHERE MaCTTN = ? AND IsDeleted = 0",
+                "UPDATE CT_TienNghi SET MaTN = ?, MaLoaiPhong = ?, SL = ?, TenTN = ? WHERE MaCTTN = ?",
                 [MaTN, MaLoaiPhong, SL, TenTN, id]
             );
             if (result.affectedRows === 0) {
