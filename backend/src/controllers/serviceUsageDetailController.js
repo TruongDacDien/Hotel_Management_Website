@@ -1,6 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
 import ServiceUsageDetailService from "../services/serviceUsageDetailService.js";
 import EmailService from "../services/emailService.js";
+import ServiceService from "../services/serviceService.js";
 
 class ServiceUsageDetailController {
     getAll = expressAsyncHandler(async (req, res) => {
@@ -40,7 +41,9 @@ class ServiceUsageDetailController {
         };
         const result = await ServiceUsageDetailService.cancelServiceUsageDetail(serviceUsageDetailId);
         const serviceDetail = await ServiceUsageDetailService.getById(serviceUsageDetailId);
-        if (serviceDetail.HinhThucThanhToan === "Online" && result === true) {
+        const service = await ServiceService.getServiceById(serviceDetail.MaDV);
+        await ServiceService.findByIdAndUpdateQuantity(service.MaDV, service.SoLuong + serviceDetail.SL);
+        if (result === true) {
             await EmailService.sendCancelServiceEmailWithHTMLTemplate("Xác nhận hủy đặt dịch vụ - The Royal Hotel", customerData, serviceDetail);
         }
         return res.status(204).json({

@@ -1,10 +1,10 @@
 export const HOTEL_INFO = {
-  name: "My Hotel",
+  name: "The Loyal Hotel",
   description:
-    "Experience unparalleled luxury and exceptional service in a breathtaking setting.",
-  address: "123 Luxury Avenue, Exclusive District, City",
-  phone: "+1 (555) 123-4567",
-  email: "info@elysianretreat.com",
+    "Trải nghiệm sự sang trọng vô song và dịch vụ đặc biệt trong một khung cảnh ngoạn mục.",
+  address: "11 Sư Vạn Hạnh, Phường 12, Quận 10, Hồ Chí Minh",
+  phone: "(8484) 3333 9999",
+  email: "info@theloyalhotel.com",
 };
 
 export const SOCIAL_LINKS = {
@@ -15,17 +15,17 @@ export const SOCIAL_LINKS = {
 };
 
 export const NAV_LINKS = [
-  { name: "Rooms", path: "/rooms" },
-  { name: "Services", path: "/services" },
-  { name: "Amenities", path: "/#amenities" },
-  { name: "Gallery", path: "/#gallery" },
+  { name: "Phòng", path: "/rooms" },
+  { name: "Dịch Vụ", path: "/services" },
+  { name: "Tiện Nghi", path: "/#amenities" },
+  { name: "Thư Viện", path: "/#gallery" },
 ];
 
 export const FOOTER_LINKS = [
-  { name: "About Us", path: "/" },
-  { name: "Rooms & Suites", path: "/rooms" },
-  { name: "Services", path: "/services" },
-  { name: "Amenities", path: "/#amenities" },
-  { name: "Gallery", path: "/#gallery" },
-  { name: "Contact Us", path: "/#contact" },
+  { name: "Về chúng tôi", path: "/" },
+  { name: "Phòng", path: "/rooms" },
+  { name: "Dịch Vụ", path: "/services" },
+  { name: "Tiện Nghi", path: "/#amenities" },
+  { name: "Thư Viện", path: "/#gallery" },
+  { name: "Liên Hệ Với Chúng Tôi", path: "/#contact" },
 ];

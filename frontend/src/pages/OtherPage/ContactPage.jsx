@@ -34,16 +34,16 @@ export default function ContactPage() {
   const validate = () => {
     const newErrors = {};
     if (formValues.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters.";
+      newErrors.name = "Tên phải có ít nhất 2 ký tự.";
     }
     if (!/\S+@\S+\.\S+/.test(formValues.email)) {
-      newErrors.email = "Please enter a valid email address.";
+      newErrors.email = "Vui lòng nhập địa chỉ email hợp lệ.";
     }
     if (formValues.subject.trim().length < 5) {
-      newErrors.subject = "Subject must be at least 5 characters.";
+      newErrors.subject = "Tiêu đề phải có ít nhất 5 ký tự.";
     }
     if (formValues.message.trim().length < 10) {
-      newErrors.message = "Message must be at least 10 characters.";
+      newErrors.message = "Tin nhắn phải có ít nhất 10 ký tự.";
     }
     return newErrors;
   };
@@ -56,7 +56,7 @@ export default function ContactPage() {
     if (Object.keys(validationErrors).length === 0) {
       console.log(formValues);
       setSubmitted(true);
-      alert("Thank you for your message. We'll get back to you shortly.");
+      alert("Cảm ơn bạn đã nhắn tin. Chúng tôi sẽ sớm phản hồi bạn.");
       setFormValues({
         name: "",
         email: "",
@@ -72,12 +72,11 @@ export default function ContactPage() {
       <div className="bg-primary/5 py-12">
         <div className="container mx-auto px-4 text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-            Contact Us
+            Liên Hệ Với Chúng Tôi
           </h1>
           <p className="text-neutral-700 max-w-2xl mx-auto">
-            We're here to help make your stay perfect. Reach out with any
-            questions, special requests, or to book your next luxurious
-            experience.
+            Chúng tôi ở đây để giúp bạn có kỳ nghỉ hoàn hảo. Hãy liên hệ với chúng tôi nếu bạn có bất kỳ
+            câu hỏi, yêu cầu đặc biệt nào hoặc để đặt trải nghiệm sang trọng tiếp theo của bạn.
           </p>
         </div>
       </div>
@@ -85,21 +84,19 @@ export default function ContactPage() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-            <ContactInfoCard icon={<MapPin size={24} />} title="Our Location">
+            <ContactInfoCard icon={<MapPin size={24} />} title="Địa Chỉ">
               <p>{HOTEL_INFO.address}</p>
               <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(
-                  HOTEL_INFO.address
-                )}`}
+                href={`https://maps.google.com/?q=${encodeURIComponent(HOTEL_INFO.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline mt-2 inline-block"
               >
-                Get Directions
+                Nhận Chỉ Đường
               </a>
             </ContactInfoCard>
 
-            <ContactInfoCard icon={<Phone size={24} />} title="Call or Email">
+            <ContactInfoCard icon={<Phone size={24} />} title="Gọi Điện hoặc Gửi Email">
               <p>
                 <a
                   href={`tel:${HOTEL_INFO.phone}`}
@@ -118,12 +115,12 @@ export default function ContactPage() {
               </p>
             </ContactInfoCard>
 
-            <ContactInfoCard icon={<Clock size={24} />} title="Opening Hours">
+            <ContactInfoCard icon={<Clock size={24} />} title="Giờ Mở Cửa">
               <p>
-                <strong>Front Desk:</strong> 24/7
+                <strong>Lễ Tân:</strong> 24/7
               </p>
               <p>
-                <strong>Restaurant:</strong> 6:30 AM - 10:30 PM
+                <strong>Nhà Hàng:</strong> 6:30 AM - 10:30 PM
               </p>
               <p>
                 <strong>Spa:</strong> 9:00 AM - 8:00 PM
@@ -135,19 +132,19 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div>
               <h2 className="text-3xl font-bold text-primary mb-6">
-                Send Us a Message
+                Gửi Tin Nhắn Cho Chúng Tôi
               </h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InputField
-                    name="name"
-                    label="Name"
+                    name="Tên của bạn"
+                    label="Tên"
                     value={formValues.name}
                     onChange={handleChange}
                     error={errors.name}
                   />
                   <InputField
-                    name="email"
+                    name="Địa chỉ email"
                     label="Email"
                     value={formValues.email}
                     onChange={handleChange}
@@ -156,26 +153,26 @@ export default function ContactPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InputField
-                    name="phone"
-                    label="Phone (Optional)"
+                    name="Số điện thoại"
+                    label="Số Điện Thoại (Tùy Chọn)"
                     value={formValues.phone}
                     onChange={handleChange}
                   />
                   <InputField
-                    name="subject"
-                    label="Subject"
+                    name="Tiêu đề email"
+                    label="Tiêu Đề"
                     value={formValues.subject}
                     onChange={handleChange}
                     error={errors.subject}
                   />
                 </div>
                 <div>
-                  <label className="block mb-2 font-medium">Message</label>
+                  <label className="block mb-2 font-medium">Tin Nhắn</label>
                   <textarea
                     name="message"
                     value={formValues.message}
                     onChange={handleChange}
-                    placeholder="How can we help you?"
+                    placeholder="Chúng tôi có thể giúp gì cho bạn?"
                     rows={5}
                     className="w-full border rounded-lg p-2 resize-none"
                   />
@@ -187,14 +184,14 @@ export default function ContactPage() {
                   type="submit"
                   className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition"
                 >
-                  Send Message
+                  Gửi Tin Nhắn
                 </button>
               </form>
             </div>
 
             {/* Google Map + Social */}
             <div>
-              <h2 className="text-3xl font-bold text-primary mb-6">Find Us</h2>
+              <h2 className="text-3xl font-bold text-primary mb-6">Tìm Chúng Tôi</h2>
               <div className="aspect-video bg-neutral-200 rounded-lg overflow-hidden shadow-md">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.231171235212!2d106.80047917451817!3d10.870014157461519!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317527587e9ad5bf%3A0xafa66f9c8be3c91!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBDw7RuZyBuZ2jhu4cgVGjDtG5nIHRpbiAtIMSQSFFHIFRQLkhDTQ!5e0!3m2!1svi!2s!4v1744712997639!5m2!1svi!2s"
@@ -209,7 +206,7 @@ export default function ContactPage() {
               </div>
 
               <div className="mt-8">
-                <h3 className="text-xl font-bold mb-4">Connect With Us</h3>
+                <h3 className="text-xl font-bold mb-4">Kết Nối Với Chúng Tôi</h3>
                 <div className="flex space-x-4">
                   <SocialIcon link={SOCIAL_LINKS.facebook}>
                     <Facebook size={20} />
@@ -234,29 +231,29 @@ export default function ContactPage() {
       <section className="py-16 bg-neutral-50">
         <div className="container mx-auto px-4 text-center mb-12">
           <h2 className="text-3xl font-bold text-primary mb-4">
-            Frequently Asked Questions
+            Những Câu Hỏi Thường Gặp
           </h2>
           <p className="text-neutral-700 max-w-2xl mx-auto">
-            Find quick answers to common questions about Elysian Retreat.
+            Tìm câu trả lời nhanh cho những câu hỏi thường gặp về The Loyal Hotel.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <FaqItem
-            question="What are your check-in and check-out times?"
-            answer="Check-in is available from 3:00 PM, and check-out is until 11:00 AM. Early check-in or late check-out may be arranged based on availability."
+            question="Giờ nhận phòng và trả phòng của bạn là mấy giờ??"
+            answer="Giờ nhận phòng là từ 3:00 chiều và giờ trả phòng là đến 11:00 sáng. Có thể sắp xếp nhận phòng sớm hoặc trả phòng muộn tùy theo tình trạng phòng trống."
           />
           <FaqItem
-            question="Is breakfast included with the room?"
-            answer="Yes, a complimentary gourmet breakfast is included with all room bookings. Room service is available for in-room dining."
+            question="Bữa sáng có bao gồm trong phòng không??"
+            answer="Có, bữa sáng miễn phí dành cho người sành ăn được bao gồm trong tất cả các đặt phòng. Dịch vụ phòng có sẵn cho việc ăn uống trong phòng."
           />
           <FaqItem
-            question="Do you offer airport transfers?"
-            answer="Yes, we provide airport transfers for an additional fee. Please contact our concierge at least 24 hours in advance to arrange this service."
+            question="Bạn có cung cấp dịch vụ đưa đón sân bay không??"
+            answer="Có, chúng tôi cung cấp dịch vụ đưa đón sân bay với một khoản phí bổ sung. Vui lòng liên hệ với nhân viên hướng dẫn của chúng tôi trước ít nhất 24 giờ để sắp xếp dịch vụ này."
           />
           <FaqItem
-            question="Is there a cancellation fee?"
-            answer="Cancellations made more than 48 hours before check-in are fully refundable. Cancellations within 48 hours may incur a one-night charge."
+            question="Có phí hủy không??"
+            answer="Hủy phòng được thực hiện trước 48 giờ so với giờ nhận phòng sẽ được hoàn lại toàn bộ. Hủy phòng trong vòng 48 giờ có thể phải chịu phí một đêm."
           />
         </div>
       </section>
@@ -277,7 +274,7 @@ function InputField({ name, label, value, onChange, error }) {
         value={value}
         onChange={onChange}
         className="w-full border rounded-lg p-2"
-        placeholder={`Your ${name}`}
+        placeholder={`${name}`}
       />
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>

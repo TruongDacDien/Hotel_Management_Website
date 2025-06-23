@@ -23,7 +23,7 @@ export default function Hero() {
             vụ đặc biệt tại khách sạn của chúng tôi.
           </p>
           <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
-            <Link to="/#waitlist">
+            <Link to="/rooms">
               <Button
                 size="lg"
                 className="bg-amber-300 hover:bg-amber-400 text-neutral-800 cursor-pointer"
@@ -31,7 +31,7 @@ export default function Hero() {
                 Đặt ngay
               </Button>
             </Link>
-            <Link to="/rooms">
+            {/* <Link to="/rooms">
               <Button
                 size="lg"
                 variant="outline"
@@ -39,7 +39,7 @@ export default function Hero() {
               >
                 Xem phòng
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

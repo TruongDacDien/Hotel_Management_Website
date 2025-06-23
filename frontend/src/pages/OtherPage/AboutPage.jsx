@@ -18,11 +18,11 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-              About Elysian Retreat
+              Về The Loyal Hotel
             </h1>
             <p className="text-neutral-700 max-w-2xl mx-auto">
-              Discover the story behind our luxury hotel, our values, and our
-              commitment to providing exceptional experiences.
+              Khám phá câu chuyện đằng sau khách sạn sang trọng của chúng tôi, các giá trị của chúng tôi và
+              cam kết của chúng tôi trong việc mang đến những trải nghiệm đặc biệt.
             </p>
           </div>
         </div>
@@ -34,27 +34,25 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl font-bold text-primary mb-6">
-                Our Story
+                Câu Chuyện Của Chúng Tôi
               </h2>
               <p className="text-neutral-700 mb-4">
-                Founded in 2010, Elysian Retreat began with a vision to create a
-                sanctuary of luxury and tranquility. What started as a boutique
-                hotel with just 15 rooms has grown into a world-renowned
-                destination for discerning travelers seeking the perfect blend
-                of comfort, elegance, and exceptional service.
+                Được thành lập vào năm 2010, The Loyal Hotel bắt đầu với tầm nhìn tạo ra một
+                khách sạn sang trọng và yên tĩnh. Bắt đầu là một khách sạn boutique
+                chỉ có 15 phòng, nơi đây đã phát triển thành một
+                điểm đến nổi tiếng thế giới dành cho những du khách sành điệu tìm kiếm sự kết hợp hoàn hảo
+                giữa sự thoải mái, thanh lịch và dịch vụ đặc biệt.
               </p>
               <p className="text-neutral-700 mb-4">
-                Our name, "Elysian," was inspired by the concept of paradise in
-                Greek mythology—a place of perfect happiness. This vision
-                continues to guide our approach to hospitality, where every
-                detail is crafted to create a transcendent experience for our
-                guests.
+                Tên của chúng tôi, "The Loyal", được lấy cảm hứng từ khái niệm sang trọng và cao cấp.
+                Tầm nhìn này tiếp tục định hướng cho cách tiếp cận của chúng tôi đối với dịch vụ hiếu khách,
+                nơi mọi chi tiết đều được chế tác để tạo ra trải nghiệm siêu việt cho khách hàng của chúng tôi.
               </p>
               <p className="text-neutral-700">
-                Today, Elysian Retreat stands as a testament to our unwavering
-                commitment to excellence, having received numerous accolades for
-                our distinctive blend of luxury, personalized service, and
-                sustainable practices.
+                Ngày nay, The Loyal Hotel là minh chứng cho cam kết không ngừng
+                của chúng tôi đối với sự xuất sắc, đã nhận được nhiều lời khen ngợi cho
+                sự kết hợp đặc biệt giữa sự sang trọng, dịch vụ được cá nhân hóa và
+                các hoạt động bền vững.
               </p>
             </div>
             <div className="relative h-[400px] rounded-lg overflow-hidden shadow-xl">
@@ -73,10 +71,10 @@ export default function AboutPage() {
       <section className="py-16 bg-neutral-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-primary mb-4">Our Values</h2>
+            <h2 className="text-3xl font-bold text-primary mb-4">Giá Trị Của Chúng Tôi</h2>
             <p className="text-neutral-700 max-w-2xl mx-auto">
-              At the heart of Elysian Retreat are the core values that shape
-              every aspect of our hospitality experience.
+              The Loyal Hotel coi trọng những giá trị cốt lõi định hình
+              mọi khía cạnh trong trải nghiệm hiếu khách của chúng tôi.
             </p>
           </div>
 
@@ -98,12 +96,11 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold mb-3">
-                Exceptional Hospitality
+                Sự Hiếu Khách Đặc Biệt
               </h3>
               <p className="text-neutral-700">
-                We believe in creating meaningful connections and memorable
-                experiences through personalized service that anticipates and
-                exceeds guest expectations.
+                Chúng tôi tin vào việc tạo ra những kết nối có ý nghĩa và những trải nghiệm đáng nhớ
+                thông qua dịch vụ được cá nhân hóa, dự đoán và vượt qua mong đợi của khách hàng.
               </p>
             </div>
 
@@ -125,12 +122,12 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold mb-3">
-                Commitment to Excellence
+                Cam Kết Về Sự Xuất Sắc
               </h3>
               <p className="text-neutral-700">
-                We are dedicated to maintaining the highest standards in every
-                aspect of our operations, from the quality of our amenities to
-                the professionalism of our staff.
+                Chúng tôi cam kết duy trì các tiêu chuẩn cao nhất trong mọi
+                khía cạnh hoạt động của mình, từ chất lượng tiện nghi đến
+                tính chuyên nghiệp của đội ngũ nhân viên.
               </p>
             </div>
 
@@ -151,12 +148,12 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold mb-3">
-                Environmental Stewardship
+                Quản Lý Môi Trường
               </h3>
               <p className="text-neutral-700">
-                We are committed to sustainable practices that minimize our
-                environmental impact while enhancing the natural beauty that
-                surrounds us.
+                Chúng tôi cam kết thực hiện các hoạt động bền vững nhằm giảm thiểu
+                tác động đến môi trường đồng thời nâng cao vẻ đẹp tự nhiên
+                xung quanh chúng tôi.
               </p>
             </div>
           </div>
@@ -168,65 +165,42 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-primary mb-4">
-              Our Leadership Team
+              Đội Ngũ Lãnh Đạo Của Chúng Tôi
             </h2>
             <p className="text-neutral-700 max-w-2xl mx-auto">
-              Meet the passionate individuals guiding Elysian Retreat's
-              commitment to excellence.
+              Gặp gỡ những cá nhân đầy nhiệt huyết đang hướng dẫn The Loyal Hotel cam kết hướng đến sự xuất sắc.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="flex justify-center items-center space-x-64">
             <div className="text-center">
               <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80"
-                  alt="CEO Portrait"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Jonathan Miller</h3>
-              <p className="text-primary font-medium mb-3">
-                Chief Executive Officer
-              </p>
-              <p className="text-neutral-700">
-                With over 25 years in luxury hospitality, Jonathan leads our
-                vision of creating exceptional experiences for every guest.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80"
+                  src="https://res.cloudinary.com/dzaoyffio/image/upload/v1750536063/avatar_Dien_ozqtsy.jpg"
                   alt="COO Portrait"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Sophia Chen</h3>
-              <p className="text-primary font-medium mb-3">
-                Chief Operations Officer
-              </p>
-              <p className="text-neutral-700">
+              <h3 className="text-xl font-bold mb-2">Trương Đắc Điền</h3>
+              <p className="text-primary font-medium mb-3">Lập Trình Viên</p>
+              {/* <p className="text-neutral-700">
                 Sophia ensures that our day-to-day operations consistently
                 deliver the quality and service our guests expect.
-              </p>
+              </p> */}
             </div>
-
             <div className="text-center">
               <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80"
+                  src="https://res.cloudinary.com/dzaoyffio/image/upload/v1750536063/avatar_Dat_btpr3r.jpg"
                   alt="Executive Chef Portrait"
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-2">Marcus Laurent</h3>
-              <p className="text-primary font-medium mb-3">Executive Chef</p>
-              <p className="text-neutral-700">
+              <h3 className="text-xl font-bold mb-2">Hoàng Tiến Đạt</h3>
+              <p className="text-primary font-medium mb-3">Lập Trình Viên</p>
+              {/* <p className="text-neutral-700">
                 A culinary master with international experience, Marcus creates
                 the exquisite dining experiences Elysian Retreat is known for.
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
@@ -236,21 +210,21 @@ export default function AboutPage() {
       <section className="py-16 bg-primary/10">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-primary mb-6">
-            Experience Elysian Retreat
+            Trải Nghiệm The Loyal Hotel
           </h2>
           <p className="text-neutral-700 max-w-2xl mx-auto mb-8">
-            We invite you to discover the perfect blend of luxury, comfort, and
-            exceptional service that defines the Elysian experience.
+            Chúng tôi mời bạn khám phá sự kết hợp hoàn hảo giữa sự sang trọng, thoải mái và
+            dịch vụ đặc biệt qua việc trải nghiệm tại The Loyal Hotel.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/rooms">
-              <Button size="lg" className="text-base">
-                Explore Our Rooms
+              <Button size="lg" variant="outline" className="text-base">
+                Khám Phá Phòng Của Chúng Tôi
               </Button>
             </Link>
             <Link to="/contact">
               <Button size="lg" variant="outline" className="text-base">
-                Contact Us
+                Liên Hệ Với Chúng Tôi
               </Button>
             </Link>
           </div>

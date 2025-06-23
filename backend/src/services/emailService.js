@@ -177,7 +177,7 @@ class EmailService {
             </tr>
             <tr style="background-color: #6b3fa4; color: white">
               <td colspan="6">TỔNG TIỀN THUÊ PHÒNG (VND)</td>
-              <td>${totalRoomMoney.toLocaleString("vi-VN")}</td>
+              <td>${(totalRoomMoney + totalRoomTax).toLocaleString("vi-VN")}</td>
             </tr>
             </table>
             `
@@ -217,7 +217,7 @@ class EmailService {
             </tr>
             <tr style="background-color: #6b3fa4; color: white">
               <td colspan="5">TỔNG TIỀN DỊCH VỤ (VND)</td>
-              <td>${totalServiceMoney.toLocaleString("vi-VN")}</td>
+              <td>${(totalServiceMoney + totalServiceTax).toLocaleString("vi-VN")}</td>
             </tr>
             </table>
             `
@@ -251,7 +251,14 @@ class EmailService {
     try {
       const room = await RoomService.getById(bookingDetail.SoPhong);
       const roomType = await RoomTypeService.getById(room.MaLoaiPhong);
+      // Tính tiền và thuế dựa trên hình thức thanh toán và trạng thái thanh toán
+      let refundAmount = 0;
+      let vatAmount = 0;
 
+      if (bookingDetail.HinhThucThanhToan === "Online" && bookingDetail.DaThanhToan === 1) {
+        refundAmount = bookingDetail.TienPhong * 1.1;
+        vatAmount = bookingDetail.TienPhong * 0.1;
+      }
       // Tạo template HTML
       const htmlTemplate = `
       <!DOCTYPE html>
@@ -309,11 +316,11 @@ class EmailService {
                    
             <tr style="background-color: #6b3fa4; color: white">
               <td colspan="6">THUẾ VAT (VND): 10%</td>
-              <td>${(bookingDetail.TienPhong * 0.1).toLocaleString("vi-VN")}</td>
+              <td>${(vatAmount).toLocaleString("vi-VN")}</td>
             </tr>
             <tr style="background-color: #6b3fa4; color: white">
               <td colspan="6">TỔNG TIỀN HOÀN THUÊ PHÒNG (VND)</td>
-              <td>${(bookingDetail.TienPhong * 1.1).toLocaleString("vi-VN")}</td>
+              <td>${(refundAmount).toLocaleString("vi-VN")}</td>
             </tr>
           </table>
 
@@ -341,7 +348,14 @@ class EmailService {
   static sendCancelServiceEmailWithHTMLTemplate = async (subject, customerData, serviceDetail) => {
     try {
       const service = await ServiceService.getServiceById(serviceDetail.MaDV);
+      // Tính tiền và thuế dựa trên hình thức thanh toán và trạng thái thanh toán
+      let refundAmount = 0;
+      let vatAmount = 0;
 
+      if (serviceDetail.HinhThucThanhToan === "Online" && serviceDetail.DaThanhToan === 1) {
+        refundAmount = serviceDetail.ThanhTien * 1.1;
+        vatAmount = serviceDetail.ThanhTien * 0.1;
+      }
       // Tạo template HTML
       const htmlTemplate = `
     <!DOCTYPE html>
@@ -397,11 +411,11 @@ class EmailService {
 
           <tr style="background-color: #6b3fa4; color: white">
             <td colspan="5">THUẾ VAT (VND): 10%</td>
-            <td>${(serviceDetail.ThanhTien * 0.1).toLocaleString("vi-VN")}</td>
+            <td>${(vatAmount).toLocaleString("vi-VN")}</td>
           </tr>
           <tr style="background-color: #6b3fa4; color: white">
             <td colspan="5">TỔNG TIỀN HOÀN DỊCH VỤ (VND)</td>
-            <td>${(serviceDetail.ThanhTien * 1.1).toLocaleString("vi-VN")}</td>
+            <td>${(refundAmount).toLocaleString("vi-VN")}</td>
           </tr>
         </table>
 
