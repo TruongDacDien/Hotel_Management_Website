@@ -25,9 +25,9 @@ import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 // Danh sách câu hỏi gợi ý
 const SAMPLE_SUGGESTIONS = [
-  "Các phòng còn trống?",
+  "Các loại phòng còn trống?",
   "Giá phòng hiện tại?",
-  "Các địa điểm xung quanh?",
+  "Các địa điểm du lịch xung quanh?",
 ];
 
 export default function Chatbot() {
@@ -309,7 +309,7 @@ export default function Chatbot() {
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          placeholder="Type your question..."
+                          placeholder="Nhập câu hỏi của bạn..."
                           className="flex-1 rounded-full px-4 py-2 text-sm"
                         />
                         <Button
