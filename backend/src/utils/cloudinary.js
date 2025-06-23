@@ -1,7 +1,8 @@
 import cloudinary from "../config/cloudinary.js";
 
-export async function handleUploadCloudinary(file) {
-  const res = await cloudinary.uploader.upload(file, {
+export async function handleUploadCloudinary(dataURI, publicId) {
+  const res = await cloudinary.uploader.upload(dataURI, {
+    public_id: publicId,
     resource_type: "auto",
     folder: "hotel_management",
   });
