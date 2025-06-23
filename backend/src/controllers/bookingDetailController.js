@@ -52,7 +52,7 @@ class BookingDetailController {
     };
     const result = await BookingDetailService.cancelBookingDetail(bookingDetailId);
     const bookingDetail = await BookingDetailService.getById(bookingDetailId);
-    if (bookingDetail.HinhThucThanhToan === "Online" && result === true) {
+    if (result === true) {
       await EmailService.sendCancelBookingEmailWithHTMLTemplate("Xác nhận hủy đặt phòng - The Royal Hotel", customerData, bookingDetail);
     }
     return res.status(204).json({

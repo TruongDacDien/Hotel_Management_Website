@@ -97,17 +97,15 @@ export default function ProfilePage() {
       toast({ title: "Huỷ thành công." });
 
       const res = await getHistoryBookingByCustomerId(userInfor.MaKH);
+
+      // Sắp xếp Bookings theo MaCTPT từ lớn đến nhỏ
       const sortedBookings = res.bookings.sort(
-        (a, b) =>
-          new Date(b.NgayBD.replace(" ", "T")) -
-          new Date(a.NgayBD.replace(" ", "T"))
+        (a, b) => b.MaCTPT - a.MaCTPT
       );
 
-      // Sắp xếp Services theo NgayApDung (mới → cũ)
+      // Sắp xếp Services theo MaCTSDDV từ lớn đến nhỏ
       const sortedServices = res.services.sort(
-        (a, b) =>
-          new Date(b.NgayApDung.replace(" ", "T")) -
-          new Date(a.NgayApDung.replace(" ", "T"))
+        (a, b) => b.MaCTSDDV - a.MaCTSDDV
       );
 
       setBookings(sortedBookings);
@@ -137,17 +135,14 @@ export default function ProfilePage() {
         const res = await getHistoryBookingByCustomerId(userInfor.MaKH);
         console.log(res);
 
+        // Sắp xếp Bookings theo MaCTPT từ lớn đến nhỏ
         const sortedBookings = res.bookings.sort(
-          (a, b) =>
-            new Date(b.NgayBD.replace(" ", "T")) -
-            new Date(a.NgayBD.replace(" ", "T"))
+          (a, b) => b.MaCTPT - a.MaCTPT
         );
 
-        // Sắp xếp Services theo NgayApDung (mới → cũ)
+        // Sắp xếp Services theo MaCTSDDV từ lớn đến nhỏ
         const sortedServices = res.services.sort(
-          (a, b) =>
-            new Date(b.NgayApDung.replace(" ", "T")) -
-            new Date(a.NgayApDung.replace(" ", "T"))
+          (a, b) => b.MaCTSDDV - a.MaCTSDDV
         );
 
         setBookings(sortedBookings);
@@ -480,12 +475,11 @@ export default function ProfilePage() {
               <p className="text-muted-foreground mb-6">
                 {selectedBooking?.loai === "room"
                   ? `Bạn chắc chắn muốn huỷ đặt phòng số ${selectedBooking?.SoPhong}?`
-                  : `Bạn chắc chắn muốn huỷ dịch vụ "${
-                      serviceNames[selectedBooking?.MaDV]
-                    }" vào ngày ${format(
-                      new Date(selectedBooking?.NgayApDung),
-                      "dd/MM/yyyy"
-                    )}?`}
+                  : `Bạn chắc chắn muốn huỷ dịch vụ "${serviceNames[selectedBooking?.MaDV]
+                  }" vào ngày ${format(
+                    new Date(selectedBooking?.NgayApDung),
+                    "dd/MM/yyyy"
+                  )}?`}
               </p>
 
               <div className="flex justify-end space-x-2">
@@ -532,8 +526,8 @@ function BookingItem({ booking, onCancelRequest }) {
               {booking.HinhThucThanhToan === "Online"
                 ? "Online"
                 : booking.HinhThucThanhToan === "Direct"
-                ? "Trực tiếp"
-                : booking.HinhThucThanhToan}
+                  ? "Trực tiếp"
+                  : booking.HinhThucThanhToan}
             </Badge>
           </div>
         </div>
@@ -633,8 +627,8 @@ function ServiceItem({ service, serviceName, onCancelRequest }) {
           {service.HinhThucThanhToan === "Online"
             ? "Online"
             : service.HinhThucThanhToan === "Direct"
-            ? "Trực tiếp"
-            : "Không rõ"}
+              ? "Trực tiếp"
+              : "Không rõ"}
         </Badge>
       </div>
 
