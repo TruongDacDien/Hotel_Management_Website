@@ -53,14 +53,14 @@ class CustomerAccount {
       const { username, password, email } = data;
       const hashPassword = bcrypt.hashSync(password, 10);
       const [accountResult] = await connection.query(
-        `INSERT INTO TaiKhoanKH (Username, Password, Email, AvatarId, AvatarURL, MaKH, LastLogin, Disabled)
-                 VALUES (?, ?, ?, ?, ?, ?, NOW(), 0)`,
+        `INSERT INTO TaiKhoanKH (Username, Password, Email, AvatarId, AvatarURL, MaKH, LastLogin, Disabled, MaXacNhan, ThoiGianHetHan)
+                 VALUES (?, ?, ?, ?, ?, ?, NOW(), 0, 'xxx', NOW())`,
         [
           username,
           hashPassword,
           email,
-          "hotel_management/user_default_m4o3wc",
-          "https://res.cloudinary.com/dzaoyffio/image/upload/v1747814352/user_default_m4o3wc.png",
+          "hotel_management/user_default",
+          "https://res.cloudinary.com/dzaoyffio/image/upload/v1747814352/hotel_management/user_default.png",
           customerId,
         ]
       );

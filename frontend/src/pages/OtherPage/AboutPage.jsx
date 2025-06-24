@@ -175,8 +175,8 @@ export default function AboutPage() {
             <div className="text-center">
               <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden">
                 <img
-                  src="https://res.cloudinary.com/dzaoyffio/image/upload/v1750536063/avatar_Dien_ozqtsy.jpg"
-                  alt="COO Portrait"
+                  src="https://res.cloudinary.com/dzaoyffio/image/upload/v1750536063/hotel_management/avatar_Dien.jpg"
+                  alt="Developer"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -190,8 +190,8 @@ export default function AboutPage() {
             <div className="text-center">
               <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden">
                 <img
-                  src="https://res.cloudinary.com/dzaoyffio/image/upload/v1750536063/avatar_Dat_btpr3r.jpg"
-                  alt="Executive Chef Portrait"
+                  src="https://res.cloudinary.com/dzaoyffio/image/upload/v1750536063/hotel_management/avatar_Dat.jpg"
+                  alt="Developer"
                   className="w-full h-full object-cover"
                 />
               </div>
