@@ -28,7 +28,7 @@ class CustomerAccountController {
       // Truyền user_MaTKKH làm public_id
       const cldRes = await handleUploadCloudinary(dataURI, `user_${accountId}`);
       req.body.avatarURL = cldRes.url;
-      req.body.avatarId = `user_${accountId}`; // Lưu user_MaTKKH thay vì public_id
+      req.body.avatarId = `hotel_management/user_${accountId}`; // Lưu user_MaTKKH thay vì public_id
     }
     const updated = await CustomerAccountService.update(accountId, req.body);
     res.json(updated);
