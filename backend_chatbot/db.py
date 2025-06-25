@@ -15,7 +15,6 @@ def get_db_connection():
         database=os.getenv("DB_NAME"),
     )
 
-
 def get_available_room_types(start_date=None, end_date=None, conn=None, cursor=None):
     if conn is None or cursor is None:
         conn = get_db_connection()
@@ -53,6 +52,34 @@ def get_available_room_types(start_date=None, end_date=None, conn=None, cursor=N
         conn.close()
     return room_types
 
+def get_available_rooms(start_date, end_date, conn=None, cursor=None):
+    if conn is None or cursor is None:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        close_conn = True
+    else:
+        close_conn = False
+
+    query = """
+    SELECT p.SoPhong, p.MaLoaiPhong, lp.TenLoaiPhong, lp.GiaNgay, lp.GiaGio, lp.SoNguoiToiDa, lp.MoTa
+    FROM Phong p
+    JOIN LoaiPhong lp ON p.MaLoaiPhong = lp.MaLoaiPhong
+    WHERE p.IsDeleted = 0 AND lp.IsDeleted = 0
+    AND p.SoPhong NOT IN (
+        SELECT ct.SoPhong
+        FROM CT_PhieuThue ct
+        WHERE ct.NgayBD < %s AND ct.NgayKT > %s
+        AND ct.TinhTrangThue IN ('Phòng đang thuê', 'Phòng đã đặt')
+    )
+    ORDER BY lp.MaLoaiPhong, p.SoPhong
+    """
+    cursor.execute(query, (end_date, start_date))
+    available_rooms = cursor.fetchall()
+
+    if close_conn:
+        conn.close()
+    return available_rooms
+
 
 def get_room_amenities(room_type_id, conn=None, cursor=None):
     if conn is None or cursor is None:
@@ -66,7 +93,7 @@ def get_room_amenities(room_type_id, conn=None, cursor=None):
     SELECT tn.TenTN, cttn.SL
     FROM CT_TienNghi cttn
     JOIN TienNghi tn ON cttn.MaTN = tn.MaTN
-    WHERE cttn.MaLoaiPhong = %s AND cttn.IsDeleted = 0
+    WHERE cttn.MaLoaiPhong = %s
     """
     cursor.execute(query, (room_type_id,))
     amenities = cursor.fetchall()
