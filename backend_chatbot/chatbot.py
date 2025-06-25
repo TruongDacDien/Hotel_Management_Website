@@ -9,7 +9,7 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel(model_name="models/gemini-1.5-pro-latest")
 
 
-def ask_gemini(room_types, amenities, locations, user_question, session_id):
+def ask_gemini(room_types, amenities, locations, available_rooms, user_question, session_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -59,6 +59,11 @@ def ask_gemini(room_types, amenities, locations, user_question, session_id):
             for l in locations
         ]
     )
+    rooms_detail_text = "\n".join([
+    f"- Phòng {r['SoPhong']} ({r['TenLoaiPhong']}): Giá ngày {r['GiaNgay']} VND, Giá giờ {r['GiaGio']} VND, Sức chứa tối đa {r['SoNguoiToiDa']}"
+    for r in available_rooms
+])
+
 
     # Tạo prompt với tin nhắn cuối cùng của khách hàng
     prompt = f"""
@@ -67,6 +72,9 @@ Tin nhắn gần nhất của khách hàng:
 
 Dữ liệu các loại phòng khách sạn:
 {rooms_text}
+
+Chi tiết các phòng trống hiện có:
+{rooms_detail_text}
 
 Tiện nghi của các loại phòng:
 {amenities_text}

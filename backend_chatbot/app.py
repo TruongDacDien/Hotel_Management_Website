@@ -6,6 +6,7 @@ from db import (
     get_room_amenities,
     get_nearby_locations,
     close_chat_session,
+    get_available_rooms
 )
 from db import cleanup_expired_sessions
 from chatbot import ask_gemini
@@ -101,6 +102,7 @@ def chat():
         start_date = data.get("start_date")
         end_date = data.get("end_date")
         room_types = get_available_room_types(start_date, end_date, conn, cursor)
+        available_rooms = get_available_rooms(start_date, end_date, conn, cursor)
         amenities = {
             rt["MaLoaiPhong"]: get_room_amenities(rt["MaLoaiPhong"], conn, cursor)
             for rt in room_types
@@ -108,7 +110,7 @@ def chat():
         locations = get_nearby_locations(conn, cursor)
 
         # Get response from Gemini with session context
-        answer = ask_gemini(room_types, amenities, locations, question, session_id)
+        answer = ask_gemini(room_types, amenities, locations, available_rooms, question, session_id)
 
         # Save chat message
         sender = customer_id if customer_id else temp_user_id
