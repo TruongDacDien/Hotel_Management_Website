@@ -72,6 +72,13 @@ export const getCustomerById = async (Id) => {
   return axios.get(`/customers/${Id}`);
 };
 
+export const changeCustomerPassword = async (accountId, currentPassword, newPassword) => {
+  return axios.put(`/customerAccounts/${accountId}/password`, {
+    currentPassword,
+    newPassword,
+  });
+};
+
 export const createOrder = async (data) => {
   return axios.post("/bookings/customerOrder", data);
 };

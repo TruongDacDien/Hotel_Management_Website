@@ -30,6 +30,8 @@ import {
 } from "../../config/api";
 import defaultAvatar from "../../assets/avatar-default.svg";
 import EditProfileModal from "./EditProfile";
+import ChangePasswordModal from "./ChangePasswordModal";
+import { changeCustomerPassword } from "../../config/api";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -226,6 +228,23 @@ export default function ProfilePage() {
     fetchNames();
   }, [services]);
 
+  const [showChangePassModal, setShowChangePassModal] = useState(false);
+
+  const handleChangePassword = async ({ currentPassword, newPassword }) => {
+    try {
+      await changeCustomerPassword(user.id, currentPassword, newPassword);
+      toast({ title: "Đổi mật khẩu thành công!" });
+      setShowChangePassModal(false);
+    } catch (err) {
+      const msg =
+        err?.message ||
+        err?.response?.data?.message ||
+        err?.response?.message ||
+        "Đổi mật khẩu thất bại";
+      toast({ title: msg, variant: "destructive" });
+    }
+  };
+
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="flex items-center mb-8">
@@ -316,15 +335,26 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="pt-4">
+              <div className="pt-4 flex gap-2">
                 <Button onClick={() => setShowModal(true)} variant="outline">
                   Chỉnh sửa
                 </Button>
+
+                <Button onClick={() => setShowChangePassModal(true)} variant="outline">
+                  Đổi mật khẩu
+                </Button>
+
                 <EditProfileModal
                   open={showModal}
                   userData={userInfor}
                   onClose={() => setShowModal(false)}
                   onSave={handleSave}
+                />
+
+                <ChangePasswordModal
+                  open={showChangePassModal}
+                  onClose={() => setShowChangePassModal(false)}
+                  onSubmit={handleChangePassword}
                 />
               </div>
             </CardContent>

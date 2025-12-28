@@ -7,8 +7,8 @@ const router = express.Router();
 router.get('/', customerAccountController.getAll);
 router.get('/:accountId', customerAccountController.getById);
 router.post('/', customerAccountController.create);
+router.put("/:accountId/password", customerAccountController.changePassword);
 router.put('/:accountId', upload.single("avatarFile"),customerAccountController.update);
 router.delete('/:accountId', customerAccountController.delete);
-router.put('/update-password', customerAccountController.findByIdAndUpdatePassword)
 
 export default router;

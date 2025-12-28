@@ -223,11 +223,10 @@ export default function Chatbot() {
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`mb-4 flex items-end ${
-                          message.type === "user"
+                        className={`mb-4 flex items-end ${message.type === "user"
                             ? "justify-end"
                             : "justify-start"
-                        }`}
+                          }`}
                       >
                         {message.type === "bot" && (
                           <>
@@ -247,7 +246,7 @@ export default function Chatbot() {
                               </div>
                               <Avatar className="h-8 w-8 ml-2">
                                 <AvatarImage
-                                  src={userInfor.AvatarURL || defaultAvatar}
+                                  src={userInfor?.AvatarURL || defaultAvatar}
                                   alt="User"
                                 />
                                 {/* <AvatarFallback>

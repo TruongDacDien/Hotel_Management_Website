@@ -40,14 +40,68 @@ class CustomerAccountController {
     res.status(204).end();
   });
 
-  findByIdAndUpdatePassword = expressAsyncHandler(async (req, res) => {
-    const { accountId, password } = req.params;
-    const hashPassword = bcrypt.hashSync(password, 10);
-    await CustomerAccountService.findByIdAndUpdatePassword(
-      accountId,
-      hashPassword
-    );
-    res.status(204).end();
+  changePassword = expressAsyncHandler(async (req, res) => {
+    const { accountId } = req.params;
+    const { currentPassword, newPassword } = req.body || {};
+
+    if (!currentPassword || !newPassword) {
+      res.status(400);
+      throw new Error("Thiếu currentPassword hoặc newPassword");
+    }
+    if (String(newPassword).length < 6) {
+      res.status(400);
+      throw new Error("Mật khẩu mới phải >= 6 ký tự");
+    }
+
+    // ⚠️ getById bên service của bạn đang throw "Account not found"
+    // nên ta bắt lỗi để trả 404 đúng thay vì 500
+    let account = null;
+    try {
+      account = await CustomerAccountService.getById(accountId);
+    } catch (e) {
+      res.status(404);
+      throw new Error("Không tìm thấy tài khoản");
+    }
+
+    // ✅ lấy field mật khẩu linh hoạt (vì DB mỗi người đặt tên khác nhau)
+    const storedPassword =
+      account?.password ?? account?.Password ?? account?.PASSWORD ?? account?.MatKhau ?? account?.matKhau;
+
+    if (!storedPassword) {
+      res.status(500);
+      throw new Error(
+        "Tài khoản không có trường mật khẩu (password/PASSWORD/MatKhau). Kiểm tra lại model/DB."
+      );
+    }
+
+    // ✅ Tránh 500 nếu mật khẩu DB đang là plaintext (không phải bcrypt)
+    const looksBcrypt =
+      typeof storedPassword === "string" && storedPassword.startsWith("$2");
+
+    let ok = false;
+    try {
+      ok = looksBcrypt
+        ? await bcrypt.compare(currentPassword, storedPassword)
+        : String(currentPassword) === String(storedPassword);
+    } catch (err) {
+      res.status(500);
+      throw new Error("Lỗi kiểm tra mật khẩu: " + err.message);
+    }
+
+    if (!ok) {
+      res.status(401);
+      throw new Error("Mật khẩu hiện tại không đúng");
+    }
+
+    // ✅ giữ format giống hiện tại để khỏi phá login
+    // (nếu DB đang dùng bcrypt => lưu bcrypt, nếu đang plaintext => lưu plaintext)
+    const nextPassword = looksBcrypt
+      ? await bcrypt.hash(String(newPassword), 10)
+      : String(newPassword);
+
+    await CustomerAccountService.findByIdAndUpdatePassword(accountId, nextPassword);
+
+    res.json({ message: "Đổi mật khẩu thành công" });
   });
 }
 
