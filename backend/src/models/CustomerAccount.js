@@ -45,7 +45,7 @@ class CustomerAccount {
       const [customerResult] = await connection.query(
         `INSERT INTO KhachHang (TenKH, GioiTinh, CCCD, CCCDImage, SDT, DiaChi, QuocTich, IsDeleted)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [fullname, null, null, null, phone, null, "Việt Nam", 0]
+        [fullname, null, null, "image", phone, null, "Việt Nam", 0]
       );
       const customerId = customerResult.insertId; // Lấy MaKH vừa tạo
 
