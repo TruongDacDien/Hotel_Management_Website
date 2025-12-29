@@ -531,8 +531,17 @@ export default function ProfilePage() {
   );
 }
 
+const formatDateValue = (value) => {
+  if (value == null || value === "") return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return format(date, "dd/MM/yyyy");
+};
+
 function BookingItem({ booking, onCancelRequest }) {
   const isRoomBooking = booking.roomId && !booking.serviceId;
+  const formattedCheckIn = formatDateValue(booking.ThoiDiemCheckIn);
+  const formattedCheckOut = formatDateValue(booking.ThoiDiemCheckOut);
   const formattedTotal = booking.TienPhong
     ? Number(booking.TienPhong).toLocaleString("vi-VN") + " VNĐ"
     : "N/A";
@@ -600,27 +609,19 @@ function BookingItem({ booking, onCancelRequest }) {
               <h4 className="text-sm font-medium text-muted-foreground">
                 Nhận phòng thực tế
               </h4>
-              <p>
-                {booking.ThoiDiemCheckIn
-                  ? format(new Date(booking.ThoiDiemCheckIn), "dd/MM/yyyy")
-                  : "N/A"}
-              </p>
+              <p>{formattedCheckIn ?? "N/A"}</p>
             </div>
             <div>
               <h4 className="text-sm font-medium text-muted-foreground">
                 Trả phòng thực tế
               </h4>
-              <p>
-                {booking.ThoiDiemCheckOut
-                  ? format(new Date(booking.ThoiDiemCheckOut), "dd/MM/yyyy")
-                  : "N/A"}
-              </p>
+              <p>{formattedCheckOut ?? "N/A"}</p>
             </div>
             <div>
               <h4 className="text-sm font-medium text-muted-foreground">
                 Số phòng
               </h4>
-              <p className="text-sm">{booking.SoPhong || "N/A"}</p>
+              <p className="text-sm">{booking.SoPhong ?? "N/A"}</p>
             </div>
           </div>
         </div>
