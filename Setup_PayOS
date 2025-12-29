@@ -1,0 +1,5 @@
+Để thực hiện được chức năng thanh toán online trên website:
+    - Tải và cài đặt “Ngrok”.
+    - Chạy ngrok với lệnh “ngrok http 5000” và copy URL ngrok:
+        Ví dụ: “https://65c3-14-169-18-157.ngrok-free.app”.
+    - Mở file “backend/src/app.js” và thay thế vô “const base_url” bằng url được cấp bởi ngrok.
