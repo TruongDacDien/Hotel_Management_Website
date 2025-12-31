@@ -1,0 +1,23 @@
+Step 1: 
+    - npm i -D @playwright/test
+    - npx playwright install
+Step 2: 
+    - Run the tests (mock mode, default)
+        $env:HEADED="1" npx playwright test -c playwright/playwright.config.ts --project=chromium
+    - Run headed for debugging
+        $env:USE_MOCKS="0" npx playwright test -c playwright/playwright.config.ts
+    - Run both (headed + real backend)
+        $env:HEADED="1" $env:USE_MOCKS="0" npx playwright test -c playwright/playwright.config.ts --project=chromium
+    - Reset back to default (recommended after testing)
+        Remove-Item Env:HEADED -ErrorAction SilentlyContinue
+        Remove-Item Env:USE_MOCKS -ErrorAction SilentlyContinue
+Step 3: 
+    - Run exactly one test according to the test case name.
+        npx playwright test -c playwright/playwright.config.ts --list
+    - Run a "Cart empty state" test in Chromium.
+        npx playwright test -c playwright/playwright.config.ts --project=chromium -g "Cart empty state"
+
+
+
+
+

@@ -44,6 +44,54 @@ def get_mapc_max_len(cursor, fallback: int = 8) -> int:
     return fallback
 
 
+def get_mapc_meta(cursor, fallback_len: int = 8) -> dict:
+    """
+    Read MaPC type/length so we can generate a matching session id.
+    """
+    try:
+        cursor.execute(
+            """
+            SELECT DATA_TYPE, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH AS L, EXTRA
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'PhienChat'
+              AND COLUMN_NAME = 'MaPC'
+            """
+        )
+        row = cursor.fetchone()
+        if row:
+            data_type = (row.get("DATA_TYPE") or "").lower()
+            column_type = (row.get("COLUMN_TYPE") or "").lower()
+            extra = (row.get("EXTRA") or "").lower()
+            max_len = row.get("L")
+            is_numeric = data_type in (
+                "int",
+                "bigint",
+                "smallint",
+                "mediumint",
+                "tinyint",
+                "decimal",
+                "numeric",
+            )
+            is_auto = "auto_increment" in extra
+            return {
+                "max_len": int(max_len) if max_len else fallback_len,
+                "is_numeric": is_numeric,
+                "is_auto": is_auto,
+                "data_type": data_type,
+                "column_type": column_type,
+            }
+    except Exception:
+        pass
+    return {
+        "max_len": fallback_len,
+        "is_numeric": False,
+        "is_auto": False,
+        "data_type": "",
+        "column_type": "",
+    }
+
+
 def new_session_id(n: int) -> str:
     """
     Tạo session id đúng độ dài n (an toàn cho CHAR/VARCHAR ngắn).
@@ -62,6 +110,89 @@ def normalize_session_id(s: str, n: int) -> str:
         return ""
     s = str(s).strip()
     return s[:n] if n > 0 else s
+
+
+def normalize_numeric_session_id(s) -> int | None:
+    if s is None:
+        return None
+    s = str(s).strip()
+    if not s.isdigit():
+        return None
+    val = int(s)
+    return val if val > 0 else None
+
+
+def get_numeric_max(data_type: str, column_type: str) -> int:
+    unsigned = "unsigned" in (column_type or "")
+    if data_type == "tinyint":
+        return 255 if unsigned else 127
+    if data_type == "smallint":
+        return 65535 if unsigned else 32767
+    if data_type == "mediumint":
+        return 16777215 if unsigned else 8388607
+    if data_type == "int":
+        return 4294967295 if unsigned else 2147483647
+    if data_type == "bigint":
+        return 18446744073709551615 if unsigned else 9223372036854775807
+    return 2147483647
+
+
+def new_numeric_session_id(cursor, data_type: str, column_type: str, attempts: int = 5) -> int:
+    max_value = get_numeric_max(data_type, column_type)
+    if max_value <= 1:
+        return 1
+    for _ in range(attempts):
+        candidate = (uuid.uuid4().int % max_value) + 1
+        cursor.execute("SELECT 1 FROM PhienChat WHERE MaPC = %s", (candidate,))
+        if not cursor.fetchone():
+            return candidate
+    return (uuid.uuid4().int % max_value) + 1
+
+
+def create_chat_session(cursor, mapc_meta: dict, mapc_len: int, temp_user_id=None, customer_id=None):
+    if mapc_meta["is_numeric"] and mapc_meta["is_auto"]:
+        if temp_user_id:
+            cursor.execute(
+                """
+                INSERT INTO PhienChat (NguoiGuiTamThoi, ThoiGianBD, TrangThai)
+                VALUES (%s, %s, 'Đang hoạt động')
+                """,
+                (temp_user_id, datetime.now()),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO PhienChat (MaTKKH, ThoiGianBD, TrangThai)
+                VALUES (%s, %s, 'Đang hoạt động')
+                """,
+                (customer_id, datetime.now()),
+            )
+        return cursor.lastrowid
+
+    if mapc_meta["is_numeric"]:
+        session_id = new_numeric_session_id(
+            cursor, mapc_meta["data_type"], mapc_meta["column_type"]
+        )
+    else:
+        session_id = new_session_id(mapc_len)
+
+    if temp_user_id:
+        cursor.execute(
+            """
+            INSERT INTO PhienChat (MaPC, NguoiGuiTamThoi, ThoiGianBD, TrangThai)
+            VALUES (%s, %s, %s, 'Đang hoạt động')
+            """,
+            (session_id, temp_user_id, datetime.now()),
+        )
+    else:
+        cursor.execute(
+            """
+            INSERT INTO PhienChat (MaPC, MaTKKH, ThoiGianBD, TrangThai)
+            VALUES (%s, %s, %s, 'Đang hoạt động')
+            """,
+            (session_id, customer_id, datetime.now()),
+        )
+    return session_id
 
 
 @app.route("/chat", methods=["POST"])
@@ -85,9 +216,13 @@ def chat():
 
     try:
         # đọc độ dài MaPC để chuẩn hóa session_id
-        mapc_len = get_mapc_max_len(cursor, fallback=8)
+        mapc_meta = get_mapc_meta(cursor, fallback_len=8)
+        mapc_len = mapc_meta["max_len"]
         if session_id:
-            session_id = normalize_session_id(session_id, mapc_len)
+            if mapc_meta["is_numeric"]:
+                session_id = normalize_numeric_session_id(session_id)
+            else:
+                session_id = normalize_session_id(session_id, mapc_len)
 
         conn.start_transaction()
 
@@ -104,17 +239,19 @@ def chat():
                 )
                 session = cursor.fetchone()
                 if not session:
-                    session_id = new_session_id(mapc_len)
-                    cursor.execute(
-                        """
-                        INSERT INTO PhienChat (MaPC, NguoiGuiTamThoi, ThoiGianBD, TrangThai)
-                        VALUES (%s, %s, %s, 'Đang hoạt động')
-                        """,
-                        (session_id, temp_user_id, datetime.now()),
+                    session_id = create_chat_session(
+                        cursor, mapc_meta, mapc_len, temp_user_id=temp_user_id
                     )
                 else:
-                    session_id = normalize_session_id(session.get("MaPC"), mapc_len)
-
+                    session_id = session.get("MaPC")
+                    if mapc_meta["is_numeric"]:
+                        session_id = normalize_numeric_session_id(session_id)
+                    else:
+                        session_id = normalize_session_id(session_id, mapc_len)
+                    if not session_id:
+                        session_id = create_chat_session(
+                            cursor, mapc_meta, mapc_len, temp_user_id=temp_user_id
+                        )
             elif customer_id:
                 cursor.execute(
                     """
@@ -126,16 +263,19 @@ def chat():
                 )
                 session = cursor.fetchone()
                 if not session:
-                    session_id = new_session_id(mapc_len)
-                    cursor.execute(
-                        """
-                        INSERT INTO PhienChat (MaPC, MaTKKH, ThoiGianBD, TrangThai)
-                        VALUES (%s, %s, %s, 'Đang hoạt động')
-                        """,
-                        (session_id, customer_id, datetime.now()),
+                    session_id = create_chat_session(
+                        cursor, mapc_meta, mapc_len, customer_id=customer_id
                     )
                 else:
-                    session_id = normalize_session_id(session.get("MaPC"), mapc_len)
+                    session_id = session.get("MaPC")
+                    if mapc_meta["is_numeric"]:
+                        session_id = normalize_numeric_session_id(session_id)
+                    else:
+                        session_id = normalize_session_id(session_id, mapc_len)
+                    if not session_id:
+                        session_id = create_chat_session(
+                            cursor, mapc_meta, mapc_len, customer_id=customer_id
+                        )
         else:
             # Validate session_id exists
             cursor.execute(
@@ -147,23 +287,13 @@ def chat():
                 (session_id, datetime.now()),
             )
             if not cursor.fetchone():
-                # session_id client gửi lên không hợp lệ/đã hết hạn -> tạo session mới thay vì để FK fail
-                session_id = new_session_id(mapc_len)
                 if temp_user_id:
-                    cursor.execute(
-                        """
-                        INSERT INTO PhienChat (MaPC, NguoiGuiTamThoi, ThoiGianBD, TrangThai)
-                        VALUES (%s, %s, %s, 'Đang hoạt động')
-                        """,
-                        (session_id, temp_user_id, datetime.now()),
+                    session_id = create_chat_session(
+                        cursor, mapc_meta, mapc_len, temp_user_id=temp_user_id
                     )
                 elif customer_id:
-                    cursor.execute(
-                        """
-                        INSERT INTO PhienChat (MaPC, MaTKKH, ThoiGianBD, TrangThai)
-                        VALUES (%s, %s, %s, 'Đang hoạt động')
-                        """,
-                        (session_id, customer_id, datetime.now()),
+                    session_id = create_chat_session(
+                        cursor, mapc_meta, mapc_len, customer_id=customer_id
                     )
 
         # Optional dates
