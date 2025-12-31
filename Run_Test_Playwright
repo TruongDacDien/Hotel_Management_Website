@@ -1,4 +1,6 @@
-Step 1: 
+Step 1:
+    - cd Hotel_Management_Website/frontend
+    - npm install
     - npm i -D @playwright/test
     - npx playwright install
 Step 2: 
